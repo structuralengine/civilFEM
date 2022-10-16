@@ -1,0 +1,6 @@
+<button (click)="onClick()">Submit</button>
+<ngx-codemirror
+  [options]="codeMirrorOptions"
+  [(ngModel)]="obj"
+  (ngModelChange)="setEditorContent($event)">
+</ngx-codemirror>
