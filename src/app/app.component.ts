@@ -4,6 +4,7 @@ import vtkFullScreenRenderWindow from 'vtk.js/Sources/Rendering/Misc/FullScreenR
 import vtkConeSource from 'vtk.js/Sources/Filters/Sources/ConeSource';
 import vtkActor from 'vtk.js/Sources/Rendering/Core/Actor';
 import vtkMapper from 'vtk.js/Sources/Rendering/Core/Mapper';
+import vtkPolyDataReader from 'vtk.js/Sources/IO/Legacy/PolyDataReader';
 
 @Component({
   selector: 'app-root',
@@ -18,19 +19,31 @@ export class AppComponent {
   fullscreenRenderWindow = null;
 
   ngAfterViewInit(): void {
+    
     this.fullscreenRenderWindow = vtkFullScreenRenderWindow.newInstance();
-    const cone = vtkConeSource.newInstance();
-    const actor = vtkActor.newInstance();
+    const renderer = this.fullscreenRenderWindow.getRenderer();
+    const renderWindow = this.fullscreenRenderWindow.getRenderWindow();
     const mapper = vtkMapper.newInstance();
 
+
+    const reader = vtkPolyDataReader.newInstance();
+    reader.setUrl("/assets/test.vtk").then(() => {
+      reader.loadData().then(() => {
+
+        const port = reader.getOutputPort();
+        mapper.setInputConnection(port);
+
+        renderer.resetCamera();
+        renderWindow.render();
+      });
+
+    });
+
+    const actor = vtkActor.newInstance();
     actor.setMapper(mapper);
-    mapper.setInputConnection(cone.getOutputPort());
 
-    const renderer = this.fullscreenRenderWindow.getRenderer();
     renderer.addActor(actor);
-    renderer.resetCamera();
 
-    const renderWindow = this.fullscreenRenderWindow.getRenderWindow();
-    renderWindow.render();
   }
+
 }
