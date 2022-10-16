@@ -11,35 +11,18 @@ import { SceneService } from './scene.service';
 export class VTKService {
   constructor(private scene: SceneService) { }
 
-  public loadMsh(response: string) {
+  public loadVYK(response: string) {
 
-    const mesh = this.parseVYK(response);
+    const geometry: THREE.BufferGeometry = this.parseASCII(response);
+    const material = new THREE.MeshLambertMaterial( { transparent: true, color: 0xff0000, opacity: 0.2 } );
+    const mesh = new THREE.Mesh( geometry, material );
+
     this.scene.add( mesh );
     this.scene.render();
   }
 
-  private parseVYK( data: string | ArrayBuffer) {
 
-		// get the 5 first lines of the files to check if there is the key word binary
-		const meta = LoaderUtils.decodeText( new Uint8Array( data, 0, 250 ) ).split( '\n' );
-
-		if ( meta[ 0 ].indexOf( 'xml' ) !== - 1 ) {
-
-			return this.parseXML( LoaderUtils.decodeText( data ) );
-
-		} else if ( meta[ 2 ].includes( 'ASCII' ) ) {
-
-			return this.parseASCII( LoaderUtils.decodeText( data ) );
-
-		} else {
-
-			return this.parseBinary( data );
-
-		}
-
-	}
-
-  private parseASCII( data: string ) {
+  private parseASCII( data: string ): THREE.BufferGeometry {
 
     // connectivity of the triangles
     const indices = [];
@@ -325,6 +308,30 @@ export class VTKService {
 
   }
 
+  /*
+  private parse( data: string) : THREE.BufferGeometry{//} | ArrayBuffer) {
+
+		// get the 5 first lines of the files to check if there is the key word binary
+		const meta = LoaderUtils.decodeText( new Uint8Array( data, 0, 250 ) ).split( '\n' );
+
+		if ( meta[ 0 ].indexOf( 'xml' ) !== - 1 ) {
+
+			return this.parseXML( LoaderUtils.decodeText( data ) );
+
+		} else if ( meta[ 2 ].includes( 'ASCII' ) ) {
+
+			return this.parseASCII( data );
+
+		} else {
+
+			return this.parseBinary( data );
+
+		}
+
+	}
+  */
+
+  /*
   private findString( buffer: Uint8Array, start: number ): {start: number, end: number, next: number, parsedString: string } {
 
     let index = start;
@@ -346,7 +353,8 @@ export class VTKService {
     };
 
   }
-
+  */
+  /*
   private parseBinary( data: ArrayBuffer ) {
 
     const buffer = new Uint8Array( data );
@@ -535,10 +543,12 @@ export class VTKService {
     return geometry;
 
   }
+  */
+  /*
+  private Float32Concat( first: number[], second: number[] ) {
 
-  private Float32Concat( first, second ) {
-
-    const firstLength = first.length, result = new Float32Array( firstLength + second.length );
+    const firstLength = first.length;
+    const result = new Float32Array( firstLength + second.length );
 
     result.set( first );
     result.set( second, firstLength );
@@ -546,8 +556,9 @@ export class VTKService {
     return result;
 
   }
-
-  private Int32Concat( first, second ) {
+  */
+  /*
+  private Int32Concat( first: number[], second: number[] ) {
 
     const firstLength = first.length, result = new Int32Array( firstLength + second.length );
 
@@ -557,69 +568,30 @@ export class VTKService {
     return result;
 
   }
+  */
+  /*
+  private xmlToJson( xml: HTMLElement ): any {
 
-  private parseXML( stringFile: string ) {
+    // Create the return object
+    let obj: any = {};
 
-    // Changes XML to JSON, based on https://davidwalsh.name/convert-xml-json
+    if ( xml.nodeType === 1 ) { // element
 
-    function xmlToJson( xml ) {
+      // do attributes
 
-      // Create the return object
-      let obj = {};
+      if ( xml.attributes ) {
 
-      if ( xml.nodeType === 1 ) { // element
+        if ( xml.attributes.length > 0 ) {
 
-        // do attributes
+          obj[ 'attributes' ] = {};
 
-        if ( xml.attributes ) {
+          for ( let j = 0; j < xml.attributes.length; j ++ ) {
 
-          if ( xml.attributes.length > 0 ) {
-
-            obj[ 'attributes' ] = {};
-
-            for ( let j = 0; j < xml.attributes.length; j ++ ) {
-
-              const attribute = xml.attributes.item( j );
-              obj[ 'attributes' ][ attribute.nodeName ] = attribute.nodeValue.trim();
-
-            }
-
-          }
-
-        }
-
-      } else if ( xml.nodeType === 3 ) { // text
-
-        obj = xml.nodeValue.trim();
-
-      }
-
-      // do children
-      if ( xml.hasChildNodes() ) {
-
-        for ( let i = 0; i < xml.childNodes.length; i ++ ) {
-
-          const item = xml.childNodes.item( i );
-          const nodeName = item.nodeName;
-
-          if ( typeof obj[ nodeName ] === 'undefined' ) {
-
-            const tmp = xmlToJson( item );
-
-            if ( tmp !== '' ) obj[ nodeName ] = tmp;
-
-          } else {
-
-            if ( typeof obj[ nodeName ].push === 'undefined' ) {
-
-              const old = obj[ nodeName ];
-              obj[ nodeName ] = [ old ];
-
-            }
-
-            const tmp = xmlToJson( item );
-
-            if ( tmp !== '' ) obj[ nodeName ].push( tmp );
+            const attribute = xml.attributes.item( j );
+            if(attribute == null) continue;
+            const nodeValue = attribute.nodeValue;
+            if(nodeValue == null) continue;
+            obj[ 'attributes' ][ attribute.nodeName ] = nodeValue.trim();
 
           }
 
@@ -627,243 +599,291 @@ export class VTKService {
 
       }
 
-      return obj;
+    } else if ( xml.nodeType === 3 ) { // text
+
+      const nodeValue = xml.nodeValue;
+      if(nodeValue != null)
+        obj = nodeValue.trim();
 
     }
 
-    // Taken from Base64-js
-    function Base64toByteArray( b64 ) {
+    // do children
+    if ( xml.hasChildNodes() ) {
 
-      const Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
-      const revLookup = [];
-      const code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+      for ( let i = 0; i < xml.childNodes.length; i ++ ) {
 
-      for ( let i = 0, l = code.length; i < l; ++ i ) {
+        const item = xml.childNodes.item( i );
+        const nodeName = item.nodeName;
 
-        revLookup[ code.charCodeAt( i ) ] = i;
+        if ( typeof obj[ nodeName ] === 'undefined' ) {
 
-      }
+          const tmp = this.xmlToJson( item );
 
-      revLookup[ '-'.charCodeAt( 0 ) ] = 62;
-      revLookup[ '_'.charCodeAt( 0 ) ] = 63;
-
-      const len = b64.length;
-
-      if ( len % 4 > 0 ) {
-
-        throw new Error( 'Invalid string. Length must be a multiple of 4' );
-
-      }
-
-      const placeHolders = b64[ len - 2 ] === '=' ? 2 : b64[ len - 1 ] === '=' ? 1 : 0;
-      const arr = new Arr( len * 3 / 4 - placeHolders );
-      const l = placeHolders > 0 ? len - 4 : len;
-
-      let L = 0;
-      let i, j;
-
-      for ( i = 0, j = 0; i < l; i += 4, j += 3 ) {
-
-        const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 18 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] << 12 ) | ( revLookup[ b64.charCodeAt( i + 2 ) ] << 6 ) | revLookup[ b64.charCodeAt( i + 3 ) ];
-        arr[ L ++ ] = ( tmp & 0xFF0000 ) >> 16;
-        arr[ L ++ ] = ( tmp & 0xFF00 ) >> 8;
-        arr[ L ++ ] = tmp & 0xFF;
-
-      }
-
-      if ( placeHolders === 2 ) {
-
-        const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 2 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] >> 4 );
-        arr[ L ++ ] = tmp & 0xFF;
-
-      } else if ( placeHolders === 1 ) {
-
-        const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 10 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] << 4 ) | ( revLookup[ b64.charCodeAt( i + 2 ) ] >> 2 );
-        arr[ L ++ ] = ( tmp >> 8 ) & 0xFF;
-        arr[ L ++ ] = tmp & 0xFF;
-
-      }
-
-      return arr;
-
-    }
-
-    function parseDataArray( ele, compressed ) {
-
-      let numBytes = 0;
-
-      if ( json.attributes.header_type === 'UInt64' ) {
-
-        numBytes = 8;
-
-      }	else if ( json.attributes.header_type === 'UInt32' ) {
-
-        numBytes = 4;
-
-      }
-
-      let txt, content;
-
-      // Check the format
-      if ( ele.attributes.format === 'binary' && compressed ) {
-
-        if ( ele.attributes.type === 'Float32' ) {
-
-          txt = new Float32Array( );
-
-        } else if ( ele.attributes.type === 'Int64' ) {
-
-          txt = new Int32Array( );
-
-        }
-
-        // VTP data with the header has the following structure:
-        // [#blocks][#u-size][#p-size][#c-size-1][#c-size-2]...[#c-size-#blocks][DATA]
-        //
-        // Each token is an integer value whose type is specified by "header_type" at the top of the file (UInt32 if no type specified). The token meanings are:
-        // [#blocks] = Number of blocks
-        // [#u-size] = Block size before compression
-        // [#p-size] = Size of last partial block (zero if it not needed)
-        // [#c-size-i] = Size in bytes of block i after compression
-        //
-        // The [DATA] portion stores contiguously every block appended together. The offset from the beginning of the data section to the beginning of a block is
-        // computed by summing the compressed block sizes from preceding blocks according to the header.
-
-        const rawData = ele[ '#text' ];
-
-        const byteData = Base64toByteArray( rawData );
-
-        let blocks = byteData[ 0 ];
-        for ( let i = 1; i < numBytes - 1; i ++ ) {
-
-          blocks = blocks | ( byteData[ i ] << ( i * numBytes ) );
-
-        }
-
-        let headerSize = ( blocks + 3 ) * numBytes;
-        const padding = ( ( headerSize % 3 ) > 0 ) ? 3 - ( headerSize % 3 ) : 0;
-        headerSize = headerSize + padding;
-
-        const dataOffsets = [];
-        let currentOffset = headerSize;
-        dataOffsets.push( currentOffset );
-
-        // Get the blocks sizes after the compression.
-        // There are three blocks before c-size-i, so we skip 3*numBytes
-        const cSizeStart = 3 * numBytes;
-
-        for ( let i = 0; i < blocks; i ++ ) {
-
-          let currentBlockSize = byteData[ i * numBytes + cSizeStart ];
-
-          for ( let j = 1; j < numBytes - 1; j ++ ) {
-
-            // Each data point consists of 8 bytes regardless of the header type
-            currentBlockSize = currentBlockSize | ( byteData[ i * numBytes + cSizeStart + j ] << ( j * 8 ) );
-
-          }
-
-          currentOffset = currentOffset + currentBlockSize;
-          dataOffsets.push( currentOffset );
-
-        }
-
-        for ( let i = 0; i < dataOffsets.length - 1; i ++ ) {
-
-          const data = fflate.unzlibSync( byteData.slice( dataOffsets[ i ], dataOffsets[ i + 1 ] ) ); // eslint-disable-line no-undef
-          content = data.buffer;
-
-          if ( ele.attributes.type === 'Float32' ) {
-
-            content = new Float32Array( content );
-            txt = Float32Concat( txt, content );
-
-          } else if ( ele.attributes.type === 'Int64' ) {
-
-            content = new Int32Array( content );
-            txt = Int32Concat( txt, content );
-
-          }
-
-        }
-
-        delete ele[ '#text' ];
-
-        if ( ele.attributes.type === 'Int64' ) {
-
-          if ( ele.attributes.format === 'binary' ) {
-
-            txt = txt.filter( function ( el, idx ) {
-
-              if ( idx % 2 !== 1 ) return true;
-
-            } );
-
-          }
-
-        }
-
-      } else {
-
-        if ( ele.attributes.format === 'binary' && ! compressed ) {
-
-          content = Base64toByteArray( ele[ '#text' ] );
-
-          //  VTP data for the uncompressed case has the following structure:
-          // [#bytes][DATA]
-          // where "[#bytes]" is an integer value specifying the number of bytes in the block of data following it.
-          content = content.slice( numBytes ).buffer;
+          if ( tmp !== '' ) obj[ nodeName ] = tmp;
 
         } else {
 
-          if ( ele[ '#text' ] ) {
+          if ( typeof obj[ nodeName ].push === 'undefined' ) {
 
-            content = ele[ '#text' ].split( /\s+/ ).filter( function ( el ) {
-
-              if ( el !== '' ) return el;
-
-            } );
-
-          } else {
-
-            content = new Int32Array( 0 ).buffer;
+            const old = obj[ nodeName ];
+            obj[ nodeName ] = [ old ];
 
           }
 
+          const tmp = this.xmlToJson( item );
+
+          if ( tmp !== '' ) obj[ nodeName ].push( tmp );
+
         }
 
-        delete ele[ '#text' ];
+      }
 
-        // Get the content and optimize it
+    }
+
+    return obj;
+
+  }
+  */
+  /*
+  // Taken from Base64-js
+  private Base64toByteArray( b64: string ) {
+
+    const Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
+    const revLookup = [];
+    const code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+    for ( let i = 0, l = code.length; i < l; ++ i ) {
+
+      revLookup[ code.charCodeAt( i ) ] = i;
+
+    }
+
+    revLookup[ '-'.charCodeAt( 0 ) ] = 62;
+    revLookup[ '_'.charCodeAt( 0 ) ] = 63;
+
+    const len = b64.length;
+
+    if ( len % 4 > 0 ) {
+
+      throw new Error( 'Invalid string. Length must be a multiple of 4' );
+
+    }
+
+    const placeHolders = b64[ len - 2 ] === '=' ? 2 : b64[ len - 1 ] === '=' ? 1 : 0;
+    const arr = new Arr( len * 3 / 4 - placeHolders );
+    const l = placeHolders > 0 ? len - 4 : len;
+
+    let L = 0;
+    let i, j;
+
+    for ( i = 0, j = 0; i < l; i += 4, j += 3 ) {
+
+      const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 18 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] << 12 ) | ( revLookup[ b64.charCodeAt( i + 2 ) ] << 6 ) | revLookup[ b64.charCodeAt( i + 3 ) ];
+      arr[ L ++ ] = ( tmp & 0xFF0000 ) >> 16;
+      arr[ L ++ ] = ( tmp & 0xFF00 ) >> 8;
+      arr[ L ++ ] = tmp & 0xFF;
+
+    }
+
+    if ( placeHolders === 2 ) {
+
+      const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 2 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] >> 4 );
+      arr[ L ++ ] = tmp & 0xFF;
+
+    } else if ( placeHolders === 1 ) {
+
+      const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 10 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] << 4 ) | ( revLookup[ b64.charCodeAt( i + 2 ) ] >> 2 );
+      arr[ L ++ ] = ( tmp >> 8 ) & 0xFF;
+      arr[ L ++ ] = tmp & 0xFF;
+
+    }
+
+    return arr;
+
+  }
+  */
+  /*
+  private parseDataArray( ele: any, compressed, json: any ) {
+
+    let numBytes = 0;
+
+    if ( json.attributes.header_type === 'UInt64' ) {
+
+      numBytes = 8;
+
+    }	else if ( json.attributes.header_type === 'UInt32' ) {
+
+      numBytes = 4;
+
+    }
+
+    let txt, content;
+
+    // Check the format
+    if ( ele.attributes.format === 'binary' && compressed ) {
+
+      if ( ele.attributes.type === 'Float32' ) {
+
+        txt = new Float32Array( );
+
+      } else if ( ele.attributes.type === 'Int64' ) {
+
+        txt = new Int32Array( );
+
+      }
+
+      // VTP data with the header has the following structure:
+      // [#blocks][#u-size][#p-size][#c-size-1][#c-size-2]...[#c-size-#blocks][DATA]
+      //
+      // Each token is an integer value whose type is specified by "header_type" at the top of the file (UInt32 if no type specified). The token meanings are:
+      // [#blocks] = Number of blocks
+      // [#u-size] = Block size before compression
+      // [#p-size] = Size of last partial block (zero if it not needed)
+      // [#c-size-i] = Size in bytes of block i after compression
+      //
+      // The [DATA] portion stores contiguously every block appended together. The offset from the beginning of the data section to the beginning of a block is
+      // computed by summing the compressed block sizes from preceding blocks according to the header.
+
+      const rawData = ele[ '#text' ];
+
+      const byteData = this.Base64toByteArray( rawData );
+
+      let blocks = byteData[ 0 ];
+      for ( let i = 1; i < numBytes - 1; i ++ ) {
+
+        blocks = blocks | ( byteData[ i ] << ( i * numBytes ) );
+
+      }
+
+      let headerSize = ( blocks + 3 ) * numBytes;
+      const padding = ( ( headerSize % 3 ) > 0 ) ? 3 - ( headerSize % 3 ) : 0;
+      headerSize = headerSize + padding;
+
+      const dataOffsets = [];
+      let currentOffset = headerSize;
+      dataOffsets.push( currentOffset );
+
+      // Get the blocks sizes after the compression.
+      // There are three blocks before c-size-i, so we skip 3*numBytes
+      const cSizeStart = 3 * numBytes;
+
+      for ( let i = 0; i < blocks; i ++ ) {
+
+        let currentBlockSize = byteData[ i * numBytes + cSizeStart ];
+
+        for ( let j = 1; j < numBytes - 1; j ++ ) {
+
+          // Each data point consists of 8 bytes regardless of the header type
+          currentBlockSize = currentBlockSize | ( byteData[ i * numBytes + cSizeStart + j ] << ( j * 8 ) );
+
+        }
+
+        currentOffset = currentOffset + currentBlockSize;
+        dataOffsets.push( currentOffset );
+
+      }
+
+      for ( let i = 0; i < dataOffsets.length - 1; i ++ ) {
+
+        const data = fflate.unzlibSync( byteData.slice( dataOffsets[ i ], dataOffsets[ i + 1 ] ) ); // eslint-disable-line no-undef
+        content = data.buffer;
+
         if ( ele.attributes.type === 'Float32' ) {
 
-          txt = new Float32Array( content );
-
-        } else if ( ele.attributes.type === 'Int32' ) {
-
-          txt = new Int32Array( content );
+          content = new Float32Array( content );
+          txt = this.Float32Concat( txt, content );
 
         } else if ( ele.attributes.type === 'Int64' ) {
 
-          txt = new Int32Array( content );
-
-          if ( ele.attributes.format === 'binary' ) {
-
-            txt = txt.filter( function ( el, idx ) {
-
-              if ( idx % 2 !== 1 ) return true;
-
-            } );
-
-          }
+          content = new Int32Array( content );
+          txt = this.Int32Concat( txt, content );
 
         }
 
-      } // endif ( ele.attributes.format === 'binary' && compressed )
+      }
 
-      return txt;
+      delete ele[ '#text' ];
 
-    }
+      if ( ele.attributes.type === 'Int64' ) {
+
+        if ( ele.attributes.format === 'binary' ) {
+
+          txt = txt.filter( function ( el, idx ) {
+
+            if ( idx % 2 !== 1 ) return true;
+
+          } );
+
+        }
+
+      }
+
+    } else {
+
+      if ( ele.attributes.format === 'binary' && ! compressed ) {
+
+        content = this.Base64toByteArray( ele[ '#text' ] );
+
+        //  VTP data for the uncompressed case has the following structure:
+        // [#bytes][DATA]
+        // where "[#bytes]" is an integer value specifying the number of bytes in the block of data following it.
+        content = content.slice( numBytes ).buffer;
+
+      } else {
+
+        if ( ele[ '#text' ] ) {
+
+          content = ele[ '#text' ].split( /\s+/ ).filter( function ( el ) {
+
+            if ( el !== '' ) return el;
+
+          } );
+
+        } else {
+
+          content = new Int32Array( 0 ).buffer;
+
+        }
+
+      }
+
+      delete ele[ '#text' ];
+
+      // Get the content and optimize it
+      if ( ele.attributes.type === 'Float32' ) {
+
+        txt = new Float32Array( content );
+
+      } else if ( ele.attributes.type === 'Int32' ) {
+
+        txt = new Int32Array( content );
+
+      } else if ( ele.attributes.type === 'Int64' ) {
+
+        txt = new Int32Array( content );
+
+        if ( ele.attributes.format === 'binary' ) {
+
+          txt = txt.filter( ( el, idx ) => {
+
+            if ( idx % 2 !== 1 ) return true;
+
+          } );
+
+        }
+
+      }
+
+    } // endif ( ele.attributes.format === 'binary' && compressed )
+
+    return txt;
+
+  }
+  */
+  /*
+  private parseXML( stringFile: string ) {
+
+    // Changes XML to JSON, based on https://davidwalsh.name/convert-xml-json
 
     // Main part
     // Get Dom
@@ -872,10 +892,10 @@ export class VTKService {
     // Get the doc
     const doc = dom.documentElement;
     // Convert to json
-    const json = xmlToJson( doc );
-    let points = [];
-    let normals = [];
-    let indices = [];
+    const json = this.xmlToJson( doc );
+    let points = new Float32Array();;
+    let normals = new Float32Array();
+    let indices = new Uint32Array();
 
     if ( json.PolyData ) {
 
@@ -918,7 +938,7 @@ export class VTKService {
             // Parse the DataArray
             if ( ( '#text' in arr[ dataArrayIndex ] ) && ( arr[ dataArrayIndex ][ '#text' ].length > 0 ) ) {
 
-              arr[ dataArrayIndex ].text = parseDataArray( arr[ dataArrayIndex ], compressed );
+              arr[ dataArrayIndex ].text = this.parseDataArray( arr[ dataArrayIndex ], compressed, json );
 
             }
 
@@ -1101,12 +1121,12 @@ export class VTKService {
       }
 
       const geometry = new BufferGeometry();
-      geometry.setIndex( new BufferAttribute( indices, 1 ) );
-      geometry.setAttribute( 'position', new BufferAttribute( points, 3 ) );
+      geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( points, 3 ) );
 
       if ( normals.length === points.length ) {
 
-        geometry.setAttribute( 'normal', new BufferAttribute( normals, 3 ) );
+        geometry.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
 
       }
 
@@ -1119,5 +1139,6 @@ export class VTKService {
     }
 
   }
+  */
 
 }
