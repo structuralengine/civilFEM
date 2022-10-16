@@ -6,6 +6,8 @@ import vtkActor from 'vtk.js/Sources/Rendering/Core/Actor';
 import vtkMapper from 'vtk.js/Sources/Rendering/Core/Mapper';
 import vtkPolyDataReader from 'vtk.js/Sources/IO/Legacy/PolyDataReader';
 
+import { Mesh, readLocalFile, writeLocalFile } from 'itk-wasm'
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -14,12 +16,18 @@ import vtkPolyDataReader from 'vtk.js/Sources/IO/Legacy/PolyDataReader';
 export class AppComponent {
   title = 'my-app';
 
-  @ViewChild('content', {read: ElementRef}) content: ElementRef;
+  @ViewChild('content', { read: ElementRef }) content: ElementRef;
 
   fullscreenRenderWindow = null;
 
   ngAfterViewInit(): void {
-    
+
+    readLocalFile("/assets/test.vtk").then((value: any) => {
+      console.log(value);
+    })
+
+
+
     this.fullscreenRenderWindow = vtkFullScreenRenderWindow.newInstance();
     const renderer = this.fullscreenRenderWindow.getRenderer();
     const renderWindow = this.fullscreenRenderWindow.getRenderWindow();
