@@ -87,7 +87,9 @@ export class VTKService {
 
         const dataset = line.split( ' ' )[ 1 ];
 
-        if ( dataset !== 'POLYDATA' ) throw new Error( 'Unsupported DATASET type: ' + dataset );
+        if ( dataset !== 'POLYDATA' && dataset !== 'UNSTRUCTURED_GRID' ) {
+          throw new Error( 'Unsupported DATASET type: ' + dataset );
+        }
 
       } else if ( inPointsSection ) {
 
