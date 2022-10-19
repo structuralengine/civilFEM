@@ -63,7 +63,7 @@ export class SceneService {
   private createHelper() {
     this.GridHelper = new THREE.GridHelper(200, 20);
     this.GridHelper.geometry.rotateX(Math.PI / 2);
-    this.scene.add(this.GridHelper);                      
+    this.scene.add(this.GridHelper);
   }
 
   // コントロール

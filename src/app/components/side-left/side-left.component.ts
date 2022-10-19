@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { threadId } from 'worker_threads';
+import { MatDialog, MatDialogRef} from '@angular/material/dialog';
+import { SideRightBodyComponent } from '../side-right-body/side-right-body.component';
 import { VTKService } from '../three/vtk.service';
 
 @Component({
@@ -11,6 +12,7 @@ import { VTKService } from '../three/vtk.service';
 export class SideLeftComponent implements OnInit {
 
   constructor(
+    public dialog: MatDialog,
     private http: HttpClient,
     private vtk: VTKService) { }
 
@@ -32,13 +34,23 @@ export class SideLeftComponent implements OnInit {
         alert(error);
       }
     );
+
+
+    //
+    this.openDialog();
   }
 
 
 
-  public openDialog(id: string): void {
+  public openDialog(): void {
 
+    let rightSide: any = SideRightBodyComponent;
 
+    this.dialog.open(rightSide, {
+      width: '350px',
+      position: { right: '10px', top: '70px' },
+      hasBackdrop: false
+    });
   }
 
 }
