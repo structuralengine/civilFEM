@@ -27,7 +27,7 @@ export class SceneService {
     this.scene = new THREE.Scene();
     // シーンの背景を白に設定
     // this.scene.background = new THREE.Color(0xf0f0f0);
-    this.scene.background = new THREE.Color( 0xffffff );
+    this.scene.background = new THREE.Color( 0x52576e );
     // レンダラーをバインド
     this.render = this.render.bind(this);
 
@@ -63,7 +63,7 @@ export class SceneService {
   private createHelper() {
     this.GridHelper = new THREE.GridHelper(200, 20);
     this.GridHelper.geometry.rotateX(Math.PI / 2);
-    this.scene.add(this.GridHelper);                      
+    this.scene.add(this.GridHelper);
   }
 
   // コントロール
