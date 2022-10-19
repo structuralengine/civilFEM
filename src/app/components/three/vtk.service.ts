@@ -13,22 +13,40 @@ export class VTKService {
 
   public loadVYK(response: string) {
 
-    const geometry: THREE.BufferGeometry = this.parseASCII(response);
-    const material = new THREE.MeshLambertMaterial( { transparent: true, color: 0xff0000, opacity: 0.2 } );
-    const mesh = new THREE.Mesh( geometry, material );
+    const res = this.parseASCII(response);
 
+    // box を生成する
+    const geometry1: THREE.BufferGeometry = res.box;
+    const material1 = new THREE.MeshBasicMaterial ( {
+      vertexColors: true
+    } );
+    const mesh = new THREE.Mesh( geometry1, material1 );
     this.scene.add( mesh );
+
+    // 境界線を生成する
+    const material = new THREE.LineBasicMaterial({
+      color: 0x0000ff
+    });
+    for(const geometry2 of res.edge){
+      const line = new THREE.Line( geometry2, material );
+      this.scene.add( line );
+    }
+
+    //
     this.scene.render();
   }
 
 
-  private parseASCII( data: string ): THREE.BufferGeometry {
+  private parseASCII( data: string ): { box: THREE.BufferGeometry, edge: THREE.BufferGeometry[]} {
 
     // connectivity of the triangles
-    const indices = [];
+    const indices: number[] = [];
+
+    // 境界線のライン
+    const edge_points: THREE.BufferGeometry[] = new Array();
 
     // triangles vertices
-    const positions = [];
+    const positions: number[] = [];
 
     // red, green, blue colors in the range 0 to 1
     const colors = [];
@@ -42,7 +60,7 @@ export class VTKService {
     const patWord = /^[^\d.\s-]+/;
 
     // pattern for reading vertices, 3 floats or integers
-    const pat3Floats = /(\-?\d+\.?[\d\-\+e]*)\s+(\-?\d+\.?[\d\-\+e]*)\s+(\-?\d+\.?[\d\-\+e]*)/g;
+    // const pat3Floats: RegExp = /(\-?\d+\.?[\d\-\+e]*)\s+(\-?\d+\.?[\d\-\+e]*)\s+(\-?\d+\.?[\d\-\+e]*)/g;
 
     // pattern for connectivity, an integer followed by any number of ints
     // the first integer is the number of polygon nodes
@@ -94,16 +112,17 @@ export class VTKService {
       } else if ( inPointsSection ) {
 
         // get the vertices
-        while ( ( result = pat3Floats.exec( line ) ) !== null ) {
+        result = line.split(' ');
+        // while ( ( result = pat3Floats.exec( line ) ) !== null ) {
 
-          if ( patWord.exec( line ) !== null ) break;
+          if ( patWord.exec( line ) == null ) {
+            const x = parseFloat( result[ 0 ] );
+            const y = parseFloat( result[ 1 ] );
+            const z = parseFloat( result[ 2 ] );
+            positions.push( x, y, z );
+          }
 
-          const x = parseFloat( result[ 1 ] );
-          const y = parseFloat( result[ 2 ] );
-          const z = parseFloat( result[ 3 ] );
-          positions.push( x, y, z );
-
-        }
+        // }
 
       } else if ( inPolygonsSection ) {
 
@@ -171,33 +190,63 @@ export class VTKService {
         if ( inColorSection ) {
 
           // Get the colors
+          result = line.split(' ');
+          // while ( ( result = pat3Floats.exec(  ) ) !== null ) {
 
-          while ( ( result = pat3Floats.exec( line ) ) !== null ) {
+            if ( patWord.exec( line ) == null ) {
+              const r = parseFloat( result[ 0 ] );
+              const g = parseFloat( result[ 1 ] );
+              const b = parseFloat( result[ 2 ] );
+              colors.push( r, g, b );
+            }
 
-            if ( patWord.exec( line ) !== null ) break;
-
-            const r = parseFloat( result[ 1 ] );
-            const g = parseFloat( result[ 2 ] );
-            const b = parseFloat( result[ 3 ] );
-            colors.push( r, g, b );
-
-          }
+          // }
 
         } else if ( inNormalsSection ) {
 
           // Get the normal vectors
+          result = line.split(' ');
+          // while ( ( result = pat3Floats.exec( line ) ) !== null ) {
 
-          while ( ( result = pat3Floats.exec( line ) ) !== null ) {
+            if ( patWord.exec( line ) == null ) {
+              const nx = parseFloat( result[ 0 ] );
+              const ny = parseFloat( result[ 1 ] );
+              const nz = parseFloat( result[ 2 ] );
+              normals.push( nx, ny, nz );
+            }
+          // }
 
-            if ( patWord.exec( line ) !== null ) break;
+        } else {
+          // CELLS 
+          if ( ( result = patConnectivity.exec( line ) ) !== null ) {
 
-            const nx = parseFloat( result[ 1 ] );
-            const ny = parseFloat( result[ 2 ] );
-            const nz = parseFloat( result[ 3 ] );
-            normals.push( nx, ny, nz );
+            // numVertices i0 i1 i2 ...
+            const numVertices = parseInt( result[ 1 ] );
+            const inds = result[ 2 ].split( /\s+/ );
+
+            if ( numVertices == 8 ) {
+              // キューブ
+              [ 0,2,1, 0,3,2, 0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,7,6, 2,3,7, 3,0,7, 0,4,7, 4,5,6, 4,6,7 ]
+              .forEach( i => indices.push(parseInt(inds[i])));
+
+              // ライン
+              const edge_indices: number[] = new Array();
+              [ 4,0,1,5,6,2,1,5,4,0,3,7,6,2,3,7,6,5,4,7 ]
+              .forEach( i => {
+                edge_indices.push(parseInt(inds[i]))
+              });
+              const points: THREE.Vector3[] = [];
+              edge_indices.forEach( i => {
+                const x = positions[i * 3];
+                const y = positions[i * 3 + 1];
+                const z = positions[i * 3 + 2];
+                points.push( new THREE.Vector3( x, y, z ) );
+              });
+              const geometry = new THREE.BufferGeometry().setFromPoints( points );
+              edge_points.push(geometry);
+            }
 
           }
-
         }
 
       }
@@ -227,6 +276,15 @@ export class VTKService {
         inPolygonsSection = false;
         inTriangleStripSection = false;
 
+      } else if (line.toLowerCase().includes('cells')) {
+
+        inCellDataSection = true;
+        inPointsSection = false;
+        inPolygonsSection = false;
+        inTriangleStripSection = false;
+        inColorSection = false;
+        inNormalsSection = false;
+
       } else if ( patCELL_DATA.exec( line ) !== null ) {
 
         inCellDataSection = true;
@@ -254,23 +312,50 @@ export class VTKService {
 
     }
 
-    let geometry = new BufferGeometry();
-    geometry.setIndex( indices );
-    geometry.setAttribute( 'position', new Float32BufferAttribute( positions, 3 ) );
+    // box を生成する
+    let geo_box = new BufferGeometry();
+    geo_box.setIndex( indices );
+    geo_box.setAttribute( 'position', new Float32BufferAttribute( positions, 3 ) );
+
 
     if ( normals.length === positions.length ) {
 
-      geometry.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+      geo_box.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
 
     }
 
     if ( colors.length !== indices.length ) {
 
       // stagger
-
       if ( colors.length === positions.length ) {
+        geo_box.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
 
-        geometry.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
+      } else {
+
+        // デフォルトのカラー
+        geo_box = geo_box.toNonIndexed();
+        const attributes = geo_box.attributes;
+        const position = attributes['position'];
+        const count = position.count;
+        const numTriangles = count / 3;
+  
+        const newColors = [];
+
+        const color = new THREE.Color(0xf0f0f0);
+
+        for ( let i = 0; i < numTriangles; i ++ ) {
+
+          const r = color.r;
+          const g = color.g;
+          const b = color.b;
+
+          newColors.push( r, g, b );
+          newColors.push( r, g, b );
+          newColors.push( r, g, b );
+
+        }
+
+        geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
 
       }
 
@@ -278,8 +363,8 @@ export class VTKService {
 
       // cell
 
-      geometry = geometry.toNonIndexed();
-      const attributes = geometry.attributes;
+      geo_box = geo_box.toNonIndexed();
+      const attributes = geo_box.attributes;
       const position = attributes['position'];
       const count = position.count;
       const numTriangles = count / 3;
@@ -299,14 +384,17 @@ export class VTKService {
           newColors.push( r, g, b );
 
         }
-
-        geometry.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
+        geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
 
       }
 
+
     }
 
-    return geometry;
+    return {
+      box: geo_box,
+      edge: edge_points
+    };
 
   }
 
