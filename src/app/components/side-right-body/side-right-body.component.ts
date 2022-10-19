@@ -37,9 +37,9 @@ export class SideRightBodyComponent implements OnInit {
       //   width:45
       // },
       // colModel: this.columnHeaders,
-      dataModel: {
-        data: this.data.body
-      },
+      // dataModel: {
+      //   data: this.data.body
+      // },
       change: (evt, ui) => {
       }
     };
