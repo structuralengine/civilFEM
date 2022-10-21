@@ -45,9 +45,11 @@ export class SideLeftComponent implements OnInit {
   public openDialog(): void {
 
     let rightSide: any = SideRightBodyComponent;
+    const h = window.innerHeight - 100;
 
     this.dialog.open(rightSide, {
       width: '350px',
+      height: h + 'px',
       position: { right: '10px', top: '70px' },
       hasBackdrop: false
     });

@@ -6,7 +6,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 
 // Angular Material
-import {MatDialogModule} from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
@@ -38,7 +40,9 @@ import { SheetComponent } from './components/sheet/sheet.component';
     BrowserAnimationsModule,
 
     MatDialogModule,
-
+    MatIconModule,
+    MatButtonModule,
+    
     CodemirrorModule,
 
   ],

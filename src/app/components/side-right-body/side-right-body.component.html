@@ -1,2 +1,13 @@
-<p>side-right-body works!</p>
-<app-sheet #grid [options]="options"></app-sheet>
+<h1 mat-dialog-title>side-right-body works!</h1>
+
+<div mat-dialog-content>
+    <app-sheet #grid [options]="options"></app-sheet>
+</div>
+
+<button mat-button (click)="click()">Basic</button>
+
+<!--
+<div mat-dialog-actions>
+    <button mat-button mat-dialog-close>閉じる</button>
+</div>
+-->
