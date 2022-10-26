@@ -1,10 +1,19 @@
 <h1 mat-dialog-title>side-right-body works!</h1>
 
 <div mat-dialog-content>
-    <app-sheet #grid [options]="options"></app-sheet>
+    <!-- <app-sheet #grid [options]="options"></app-sheet> -->
+    <form>
+        <!-- ［1］アップロードファイル選択ボックスを準備 *1 -->
+        <input id="upfile" name="upfile" type="file" #fl
+          accept="*" (change)="onchange(fl.files)" />
+    </form>
 </div>
 
 <button mat-button (click)="click()">Basic</button>
+
+
+
+
 
 <!--
 <div mat-dialog-actions>

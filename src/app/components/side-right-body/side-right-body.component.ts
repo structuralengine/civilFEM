@@ -3,7 +3,6 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { SheetComponent } from '../sheet/sheet.component';
 import pq from "pqgrid";
 import { BridgePalamService } from 'src/app/service/bridge-palam.service';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpClient, HttpEventType, HttpHeaders } from '@angular/common/http';
 
 @Component({
@@ -55,11 +54,11 @@ export class SideRightBodyComponent implements OnInit {
 
     const inputJson = this.data.getPlantFEMJson();
     const blob = new window.Blob([inputJson], { type: "text/plain" });
-    // const file = new File([blob], "generate_bridge.json", { type: "application/octet-stream" })
+    const file = new File([blob], "generate_bridge.json");
 
     const data = new FormData();
     // data.append('upfile', file, file.name);
-    data.append("files", blob, "generate_bridge.json")
+    data.append("files", file)
 
     this.http.post(
       'https://plantfem.org:5555/bridge_creator/uploadfile',
@@ -87,6 +86,31 @@ export class SideRightBodyComponent implements OnInit {
       console.error(error);
     })
     ;
+  }
+
+
+
+   // ［2］アップロードの実行
+   onchange(list: any) {
+    // ファイルが指定されていなければ
+    if (list.length <= 0) { return; }
+
+    // ［3］ファイルを取得
+    let f = list[0];
+    // ［4］ファイルをセット
+    let data = new FormData();
+    data.append('files', f, f.name);
+
+    // ［5］サーバーに送信
+    this.http.post('https://plantfem.org:5555/bridge_creator/uploadfile', data)
+      .subscribe(
+        data => {
+          console.log(data);
+        },
+        error => {
+          console.log(error);
+        }
+      );
   }
 
 
