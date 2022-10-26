@@ -66,7 +66,8 @@ export class SideRightBodyComponent implements OnInit {
       data,
       {
         headers: new HttpHeaders({
-          "Content-Type": "multipart/form-data;"
+          "Content-Type": "multipart/form-data;",
+          "Host": "plantfem.org:5555"
         }),
       }
     ).subscribe(event => {

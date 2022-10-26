@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production --base-href \"https://structuralengine.github.io/civilFEM/\" && angular-cli-ghpages",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -25,6 +25,7 @@
     "@types/jquery": "^3.5.14",
     "@types/jqueryui": "^1.12.16",
     "@types/three": "^0.137.0",
+    "angular-cli-ghpages": "^1.0.3",
     "codemirror": "^5.65.2",
     "jquery": "^3.6.1",
     "jquery-ui-pack": "^1.12.3",
