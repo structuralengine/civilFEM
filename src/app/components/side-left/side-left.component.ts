@@ -17,7 +17,7 @@ export class SideLeftComponent implements OnInit {
     private vtk: VTKService) { }
 
   ngOnInit(): void {
-
+    /*
     const url = 'assets/plantFEMtest.vtk';
 
     this.http.get(url, {
@@ -34,7 +34,7 @@ export class SideLeftComponent implements OnInit {
         alert(error);
       }
     );
-
+    */
 
     //
     this.openDialog();

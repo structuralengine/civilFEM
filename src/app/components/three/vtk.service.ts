@@ -12,6 +12,7 @@ export class VTKService {
   constructor(private scene: SceneService) { }
 
   public loadVYK(response: string) {
+    this.scene.clear();
 
     const res = this.parseASCII(response);
 

@@ -5,6 +5,7 @@ import pq from "pqgrid";
 import { BridgePalamService } from 'src/app/service/bridge-palam.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpClient, HttpEventType, HttpHeaders } from '@angular/common/http';
+import { VTKService } from '../three/vtk.service';
 
 @Component({
   selector: 'app-side-right-body',
@@ -18,7 +19,8 @@ export class SideRightBodyComponent implements OnInit {
   constructor(
     private http: HttpClient,
     public dialogRef: MatDialogRef<SideRightBodyComponent>,
-    private data: BridgePalamService
+    private data: BridgePalamService,
+    private vtk: VTKService
     ) { }
 
   ngOnInit(): void {
@@ -48,46 +50,53 @@ export class SideRightBodyComponent implements OnInit {
   };
 
   /// モデルを plantFEM からダウンロードする
-
-
-
   public click(): void {
 
     const inputJson = this.data.getPlantFEMJson();
-    const blob = new window.Blob([inputJson], { type: "text/plain" });
-    // const file = new File([blob], "generate_bridge.json", { type: "application/octet-stream" })
+
+    const f = new window.File([inputJson], "generate_bridge.json", { type: "application/json" })
 
     const data = new FormData();
-    // data.append('upfile', file, file.name);
-    data.append("files", blob, "generate_bridge.json")
+    data.append('files', f, f.name);
 
     this.http.post(
       'https://plantfem.org:5555/bridge_creator/uploadfile',
       data,
-      {
-        headers: new HttpHeaders({
-          "Content-Type": "multipart/form-data;",
-          "Host": "plantfem.org:5555"
-        }),
+      { responseType: 'text' }
+
+      ).subscribe(event => {
+        const domParser = new DOMParser();
+        const htmlElement = domParser.parseFromString(event, 'text/html');
+        const frm: HTMLCollection = htmlElement.getElementsByClassName("g-3");
+        for(let i=0; i<frm.length; i++){
+          const t: any = frm[i];
+          const t0 = t[0];
+          let url = 'https://plantfem.org:5555/bridge_creator/downloadfile/?filename=';
+          url += t0.value;
+          this.get_vtk(url);
+          break;
+        }
+      },
+      (error) => {
+        alert("error get_vtk_link()");
+        console.error(error);
       }
-    ).subscribe(event => {
+    );
 
-      console.log(event);
-      // if ( event.type === HttpEventType.UploadProgress ) {
-      //   console.log(Math.round((100 * event.loaded) / event.total));
-      // }
-
-      // if ( event.type === HttpEventType.Response ) {
-      //   console.log(event.body);
-      // }
-
-    },
-    (error) => {
-      alert(error);
-      console.error(error);
-    })
-    ;
   }
 
+  private get_vtk(url: string): void {
+
+    this.http.get(url,{ responseType: 'text' })
+      .subscribe(event => {
+        this.vtk.loadVYK(event);
+        },
+        (error) => {
+          alert(error.message);
+          console.error(error);
+        }
+      );
+
+  }
 
 }
