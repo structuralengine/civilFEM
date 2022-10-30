@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
 import { MatDialog, MatDialogRef} from '@angular/material/dialog';
+import { MatStepper } from '@angular/material/stepper';
 import { SideRightBodyComponent } from '../side-right-body/side-right-body.component';
+import { SideRightPreComponent } from '../side-right-pre/side-right-pre.component';
 
 @Component({
   selector: 'app-menu',
@@ -11,11 +13,13 @@ import { SideRightBodyComponent } from '../side-right-body/side-right-body.compo
 })
 export class MenuComponent implements OnInit {
 
+  @ViewChild('stepper') private myStepper: MatStepper;
+  
   public dummyFormGroup = this._formBuilder.group({
     firstCtrl: ['', Validators.required],
   });
 
-  public isLinear = false;
+  private currentDialog: MatDialogRef<unknown, any>;
 
   constructor(
     public dialog: MatDialog,
@@ -23,14 +27,45 @@ export class MenuComponent implements OnInit {
 
 
   ngOnInit(): void {
-        //
-        const dialog = this.openDialog(SideRightBodyComponent);
-        dialog.afterClosed().subscribe( (result:any) => {
-          this.isLinear = false;
-        });
+    this.openBodyDialog();
   }
 
-  public openDialog(target: any): MatDialogRef<unknown, any> {
+  public stepChange(event: any): void {
+    this.currentDialog.close(event.selectedIndex);
+  }
+
+  // 3Dモデルの設定画面を開く
+  private openBodyDialog(): void {
+    this.currentDialog = this.openDialog(SideRightBodyComponent);
+    this.currentDialog.afterClosed().subscribe( (result:any) => {
+      // 3Dモデルが閉じられた時
+      if(result === 1){
+        this.myStepper.next();
+        this.openPreDialog();
+      }else{
+        this.myStepper.next();
+        this.myStepper.next();
+        // 解析結果表示 
+      }
+    });
+  }
+
+  // 解析条件の設定画面を開く
+  private openPreDialog(): void {
+    this.currentDialog = this.openDialog(SideRightPreComponent);
+    this.currentDialog.afterClosed().subscribe( (result:any) => {
+      // 解析条件が閉じられた時
+      if(result === 0){
+        this.myStepper.previous();
+        this.openBodyDialog();
+      }else{
+        this.myStepper.next();
+        // 解析結果表示 
+      }
+    });
+  }
+
+  private openDialog(target: any): MatDialogRef<unknown, any> {
 
     const rightSide: any = target;
     const h = window.innerHeight - 100;

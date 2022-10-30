@@ -24,24 +24,11 @@ export class SideRightBodyComponent implements OnInit {
     ) { }
 
   ngOnInit(): void {
-    // デフォルトの vtk モデルをロードする
-    const url = 'assets/default_bridge.vtk';
-
-    this.http.get(url, {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      }),
-      responseType: 'text'
-    })
-    .subscribe(
-      (response: any) => {
-        this.vtk.loadVYK(response);
-      },
-      (error: any) => {
-        alert(error);
-      }
-    );
-
+    if(this.data.get_vtk() == null){
+      this.get_vtk('assets/default_bridge.vtk'); // デフォルトの vtk モデルをロードする
+    } else {
+      this.vtk.loadVYK(this.data.get_vtk());
+    }
   }
 
   // グリッドの設定
@@ -107,8 +94,8 @@ export class SideRightBodyComponent implements OnInit {
 
     this.http.get(url,{ responseType: 'text' })
       .subscribe(event => {
+        this.data.set_vtk(event);
         this.vtk.loadVYK(event);
-        this.dialogRef.close('OK');
         },
         (error) => {
           alert(error.message);

@@ -16,7 +16,7 @@
 
     <span class="example-spacer"></span>
 
-    <mat-stepper style="height:64px" #stepper>
+    <mat-stepper (selectionChange)="stepChange($event)" style="height:64px" #stepper>
         <mat-step [stepControl]="dummyFormGroup" label="3Dモデル生成"></mat-step>
         <mat-step [stepControl]="dummyFormGroup" label="解析条件"></mat-step>
         <mat-step [stepControl]="dummyFormGroup" label="解析結果"></mat-step>

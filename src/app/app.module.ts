@@ -26,6 +26,7 @@ import { SideLeftComponent } from './components/side-left/side-left.component';
 import { SideRightBodyComponent } from './components/side-right-body/side-right-body.component';
 import { SheetComponent } from './components/sheet/sheet.component';
 import { MenuComponent } from './components/menu/menu.component';
+import { SideRightPreComponent } from './components/side-right-pre/side-right-pre.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +37,8 @@ import { MenuComponent } from './components/menu/menu.component';
     SideLeftComponent,
     SideRightBodyComponent,
     SheetComponent,
-    MenuComponent
+    MenuComponent,
+    SideRightPreComponent
   ],
   imports: [
     BrowserModule,

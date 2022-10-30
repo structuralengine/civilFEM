@@ -44,4 +44,15 @@ export class BridgePalamService {
     }
     return JSON.stringify(result, null, 2);
   }
+
+  // サーバーで生成された vtkファイルを保存する
+  private vtk: string = null;
+  public get_vtk(): string {
+    return this.vtk;
+  }
+  public set_vtk(_vtk: string): void {
+    this.vtk = _vtk;
+  }
+
+
 }
