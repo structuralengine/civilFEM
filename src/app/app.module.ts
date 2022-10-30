@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { ReactiveFormsModule } from '@angular/forms';
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { FormsModule } from "@angular/forms";
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -9,7 +10,11 @@ import { HttpClientModule } from '@angular/common/http';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
@@ -20,6 +25,7 @@ import { CodeEditorComponent } from './components/code-editor/code-editor.compon
 import { SideLeftComponent } from './components/side-left/side-left.component';
 import { SideRightBodyComponent } from './components/side-right-body/side-right-body.component';
 import { SheetComponent } from './components/sheet/sheet.component';
+import { MenuComponent } from './components/menu/menu.component';
 
 @NgModule({
   declarations: [
@@ -29,12 +35,14 @@ import { SheetComponent } from './components/sheet/sheet.component';
     CodeEditorComponent,
     SideLeftComponent,
     SideRightBodyComponent,
-    SheetComponent
+    SheetComponent,
+    MenuComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     DragDropModule,
     BrowserAnimationsModule,
@@ -42,9 +50,13 @@ import { SheetComponent } from './components/sheet/sheet.component';
     MatDialogModule,
     MatIconModule,
     MatButtonModule,
-    
-    CodemirrorModule,
+    MatStepperModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatMenuModule,
+    MatToolbarModule,
 
+    CodemirrorModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

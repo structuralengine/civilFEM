@@ -1,8 +1,8 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { SideRightBodyComponent } from '../side-right-body/side-right-body.component';
-import { VTKService } from '../three/vtk.service';
+
 
 @Component({
   selector: 'app-side-left',
@@ -11,48 +11,46 @@ import { VTKService } from '../three/vtk.service';
 })
 export class SideLeftComponent implements OnInit {
 
+  public firstFormGroup = this._formBuilder.group({
+    firstCtrl: ['', Validators.required],
+  });
+
+  public secondFormGroup = this._formBuilder.group({
+    secondCtrl: ['', Validators.required],
+  });
+
+  public isLinear = true;
+
   constructor(
     public dialog: MatDialog,
-    private http: HttpClient,
-    private vtk: VTKService) { }
+    private _formBuilder: FormBuilder) { }
 
   ngOnInit(): void {
-    /*
-    const url = 'assets/plantFEMtest.vtk';
-
-    this.http.get(url, {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      }),
-      responseType: 'text'
-    })
-    .subscribe(
-      (response: any) => {
-        this.vtk.loadVYK(response);
-      },
-      (error: any) => {
-        alert(error);
-      }
-    );
-    */
 
     //
-    this.openDialog();
+    const dialog = this.openDialog(SideRightBodyComponent);
+    dialog.afterClosed().subscribe( (result:any) => {
+      this.isLinear = false;
+      
+    });
   }
 
 
 
-  public openDialog(): void {
+  public openDialog(target: any): MatDialogRef<unknown, any> {
 
-    let rightSide: any = SideRightBodyComponent;
+    const rightSide: any = target;
     const h = window.innerHeight - 100;
 
-    this.dialog.open(rightSide, {
+    const dialog = this.dialog.open(rightSide, {
       width: '350px',
       height: h + 'px',
       position: { right: '10px', top: '70px' },
       hasBackdrop: false
     });
+
+    return dialog;
+
   }
 
 }

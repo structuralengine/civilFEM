@@ -1,0 +1,31 @@
+<mat-toolbar color="primary">
+    <button mat-icon-button  [matMenuTriggerFor]="menu" class="example-icon" aria-label="Example icon-button with menu icon">
+        <mat-icon>menu</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+        <label mat-menu-item >
+            <span>
+                ファイルを開く
+                <input type="file" accept="application/json" (change)="open($event)" style="display: none" />
+            </span>
+        </label>
+        <button mat-menu-item (click)="save()">ファイルを保存</button>
+    </mat-menu>
+
+    <span>plantFEM-高架橋FEM解析</span>
+
+    <span class="example-spacer"></span>
+
+    <mat-stepper style="height:64px" #stepper>
+        <mat-step [stepControl]="dummyFormGroup" label="3Dモデル生成"></mat-step>
+        <mat-step [stepControl]="dummyFormGroup" label="解析条件"></mat-step>
+        <mat-step [stepControl]="dummyFormGroup" label="解析結果"></mat-step>
+    </mat-stepper>
+
+    <span class="example-spacer"></span>
+
+    <button mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
+        <mat-icon>share</mat-icon>
+    </button>
+
+</mat-toolbar>

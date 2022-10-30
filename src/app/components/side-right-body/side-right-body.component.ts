@@ -24,6 +24,24 @@ export class SideRightBodyComponent implements OnInit {
     ) { }
 
   ngOnInit(): void {
+    // デフォルトの vtk モデルをロードする
+    const url = 'assets/default_bridge.vtk';
+
+    this.http.get(url, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      }),
+      responseType: 'text'
+    })
+    .subscribe(
+      (response: any) => {
+        this.vtk.loadVYK(response);
+      },
+      (error: any) => {
+        alert(error);
+      }
+    );
+
   }
 
   // グリッドの設定
@@ -50,7 +68,7 @@ export class SideRightBodyComponent implements OnInit {
   };
 
   /// モデルを plantFEM からダウンロードする
-  public click(): void {
+  public apply(): void {
 
     const inputJson = this.data.getPlantFEMJson();
 
@@ -90,6 +108,7 @@ export class SideRightBodyComponent implements OnInit {
     this.http.get(url,{ responseType: 'text' })
       .subscribe(event => {
         this.vtk.loadVYK(event);
+        this.dialogRef.close('OK');
         },
         (error) => {
           alert(error.message);

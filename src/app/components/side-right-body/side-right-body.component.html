@@ -1,13 +1,10 @@
-<h1 mat-dialog-title>Create Bridge Model</h1>
+<h1 mat-dialog-title>高架橋モデルの生成</h1>
 
 <div mat-dialog-content>
     <app-sheet #grid [options]="options"></app-sheet>
 </div>
 
-<button mat-button (click)="click()">Create Model</button>
-
-<!--
 <div mat-dialog-actions>
-    <button mat-button mat-dialog-close>閉じる</button>
+    <button mat-raised-button color="primary" (click)="apply()">更新</button>
+    <button mat-raised-button color="primary" mat-dialog-close>次へ</button>
 </div>
--->
