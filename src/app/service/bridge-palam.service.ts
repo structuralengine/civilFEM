@@ -7,8 +7,8 @@ export class BridgePalamService {
 
   constructor() { }
 
+  // 3Dモデル ------------------------------------------------------
   public body: any = [
-
       ["NumPiers_x", 2],
       ["NumPiers_y", 3],
       ["Width", 10.0],
@@ -26,7 +26,7 @@ export class BridgePalamService {
 
 
   public getPlantFEMJson(): string {
-   const result = {};
+    const result = {};
     for(const column of this.body){
       const key: string = column[0];
       let value = column[1];
@@ -54,7 +54,7 @@ export class BridgePalamService {
   }
 
 
-  ///
+  /// 解析条件 -------------------------------------------------------
   public pre: any = [
     ["Young's modulus (kPa)", 10000000.00],
     ["Poisson's ratio", 0.300],
@@ -84,7 +84,8 @@ export class BridgePalamService {
 
   }
 
-  /// 解析結果 results of static analysis !
+  /// 解析結果 results of static analysis ! -------------------------------------
+  public isCalcrated: boolean = false;
   //0 - Deformation & mean stress
   //1 - Deformation & s(1,1)
   //2 - Deformation & s(2,2)

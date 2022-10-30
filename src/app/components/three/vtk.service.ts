@@ -51,6 +51,7 @@ export class VTKService {
 
     // red, green, blue colors in the range 0 to 1
     const colors = [];
+    const scalars = [];
 
     // normal vector, one per vertex
     const normals = [];
@@ -83,7 +84,7 @@ export class VTKService {
     const patCELL_DATA = /^CELL_DATA[ ]+(\d+)/;
 
     // Start of color section
-    const patCOLOR_SCALARS = /^COLOR_SCALARS[ ]+(\w+)[ ]+3/;
+    const patCOLOR_SCALARS = /^SCALARS[ ]+(\w+)[ ]+3/;
 
     // NORMALS Normals float
     const patNORMALS = /^NORMALS[ ]+(\w+)[ ]+(\w+)/;
@@ -195,10 +196,17 @@ export class VTKService {
           // while ( ( result = pat3Floats.exec(  ) ) !== null ) {
 
             if ( patWord.exec( line ) == null ) {
-              const r = parseFloat( result[ 0 ] );
-              const g = parseFloat( result[ 1 ] );
-              const b = parseFloat( result[ 2 ] );
-              colors.push( r, g, b );
+
+              if(result.length < 3){
+                const a = parseFloat( line );
+                if(!isNaN(a))
+                  scalars.push(a);
+              } else {
+                const r = parseFloat( result[ 0 ] );
+                const g = parseFloat( result[ 1 ] );
+                const b = parseFloat( result[ 2 ] );
+                colors.push( r, g, b );
+              }
             }
 
           // }
@@ -218,7 +226,7 @@ export class VTKService {
           // }
 
         } else {
-          // CELLS 
+          // CELLS
           if ( ( result = patConnectivity.exec( line ) ) !== null ) {
 
             // numVertices i0 i1 i2 ...
@@ -294,7 +302,13 @@ export class VTKService {
         inTriangleStripSection = false;
 
       } else if ( patCOLOR_SCALARS.exec( line ) !== null ) {
+        inColorSection = true;
+        inNormalsSection = false;
+        inPointsSection = false;
+        inPolygonsSection = false;
+        inTriangleStripSection = false;
 
+      } else if (line.toLowerCase().includes('scalars')) {
         inColorSection = true;
         inNormalsSection = false;
         inPointsSection = false;
@@ -331,6 +345,34 @@ export class VTKService {
       if ( colors.length === positions.length ) {
         geo_box.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
 
+      } else if ( scalars.length === edge_points.length ) {
+
+        // デフォルトのカラー
+        geo_box = geo_box.toNonIndexed();
+        const attributes = geo_box.attributes;
+        const position = attributes['position'];
+        const count = position.count;
+        const numTriangles = count / 3;
+
+        const newColors = [];
+
+        const color = new THREE.Color(0xf0f0f0);
+
+        for ( let i = 0; i < numTriangles; i ++ ) {
+
+          const r = color.r;
+          const g = color.g;
+          const b = color.b;
+
+          newColors.push( r, g, b );
+          newColors.push( r, g, b );
+          newColors.push( r, g, b );
+
+        }
+
+        geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
+
+      
       } else {
 
         // デフォルトのカラー

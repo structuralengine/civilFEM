@@ -51,6 +51,7 @@ export class SideRightBodyComponent implements OnInit {
       data: this.data.body
     },
     change: (evt, ui) => {
+      this.data.isCalcrated = false;
     }
   };
 

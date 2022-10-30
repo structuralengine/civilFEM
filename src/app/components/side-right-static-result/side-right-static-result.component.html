@@ -4,7 +4,8 @@
     <mat-radio-group aria-labelledby="example-radio-group-label" class="result-radio-group"
         [(ngModel)]="favoriteSeason">
         <mat-radio-button class="result-radio-button"
-        *ngFor="let season of seasons" [value]="season">
+        *ngFor="let season of seasons" [value]="season"
+        (change)="radioChange()">
             {{season}}
         </mat-radio-button>
     </mat-radio-group>
@@ -13,5 +14,5 @@
 </div>
 
 <div mat-dialog-actions>
-    <button mat-raised-button color="primary" [mat-dialog-close]="2">前へ</button>
+    <button mat-raised-button color="primary" [mat-dialog-close]="2">解析条件の設定に戻る</button>
 </div>

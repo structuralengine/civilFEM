@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper } from '@angular/material/stepper';
+import { BridgePalamService } from 'src/app/service/bridge-palam.service';
 import { SideRightBodyComponent } from '../side-right-body/side-right-body.component';
 import { SideRightPreComponent } from '../side-right-pre/side-right-pre.component';
 import { SideRightStaticResultComponent } from '../side-right-static-result/side-right-static-result.component';
@@ -24,7 +25,8 @@ export class MenuComponent implements OnInit {
 
   constructor(
     public dialog: MatDialog,
-    private _formBuilder: FormBuilder) { }
+    private _formBuilder: FormBuilder,
+    public data: BridgePalamService) { }
 
 
   ngOnInit(): void {
