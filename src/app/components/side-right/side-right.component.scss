@@ -1,8 +1,19 @@
-.my-radio-group{
+.my-radio-group {
     margin-left: 15px;
     margin-bottom: 10px;
 }
 
 .mat-radio-button ~ .mat-radio-button {
     margin-left: 16px;
+}
+
+.result-radio-group {
+    display: flex;
+    flex-direction: column;
+    margin: 15px 0;
+    align-items: flex-start;
+}
+
+.result-radio-button {
+    margin: 5px;
 }
