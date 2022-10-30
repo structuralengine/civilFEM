@@ -15,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatRadioModule } from '@angular/material/radio';
 
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
@@ -27,6 +28,7 @@ import { SideRightBodyComponent } from './components/side-right-body/side-right-
 import { SheetComponent } from './components/sheet/sheet.component';
 import { MenuComponent } from './components/menu/menu.component';
 import { SideRightPreComponent } from './components/side-right-pre/side-right-pre.component';
+import { SideRightStaticResultComponent } from './components/side-right-static-result/side-right-static-result.component';
 
 @NgModule({
   declarations: [
@@ -38,7 +40,8 @@ import { SideRightPreComponent } from './components/side-right-pre/side-right-pr
     SideRightBodyComponent,
     SheetComponent,
     MenuComponent,
-    SideRightPreComponent
+    SideRightPreComponent,
+    SideRightStaticResultComponent
   ],
   imports: [
     BrowserModule,
@@ -57,7 +60,8 @@ import { SideRightPreComponent } from './components/side-right-pre/side-right-pr
     MatInputModule,
     MatMenuModule,
     MatToolbarModule,
-
+    MatRadioModule,
+    
     CodemirrorModule,
   ],
   providers: [],

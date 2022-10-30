@@ -45,7 +45,7 @@ export class SideRightBodyComponent implements OnInit {
     stripeRows: false,
     colModel: [
       { title: "key", width: 160, editable: false, dataType: "string" },
-      { title: "value", width: 70, dataType: "integer" }
+      { title: "value", width: 70, dataType: "float" }
     ],
     dataModel: {
       data: this.data.body

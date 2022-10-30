@@ -1,10 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 
-import { MatDialog, MatDialogRef} from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatStepper } from '@angular/material/stepper';
 import { SideRightBodyComponent } from '../side-right-body/side-right-body.component';
 import { SideRightPreComponent } from '../side-right-pre/side-right-pre.component';
+import { SideRightStaticResultComponent } from '../side-right-static-result/side-right-static-result.component';
 
 @Component({
   selector: 'app-menu',
@@ -14,7 +15,7 @@ import { SideRightPreComponent } from '../side-right-pre/side-right-pre.componen
 export class MenuComponent implements OnInit {
 
   @ViewChild('stepper') private myStepper: MatStepper;
-  
+
   public dummyFormGroup = this._formBuilder.group({
     firstCtrl: ['', Validators.required],
   });
@@ -31,21 +32,23 @@ export class MenuComponent implements OnInit {
   }
 
   public stepChange(event: any): void {
-    this.currentDialog.close(event.selectedIndex);
+    this.currentDialog.close(-1 * (event.selectedIndex + 1));
   }
 
   // 3Dモデルの設定画面を開く
   private openBodyDialog(): void {
     this.currentDialog = this.openDialog(SideRightBodyComponent);
-    this.currentDialog.afterClosed().subscribe( (result:any) => {
+    this.currentDialog.afterClosed().subscribe((result: number) => {
       // 3Dモデルが閉じられた時
-      if(result === 1){
-        this.myStepper.next();
+      if (Math.abs(result) === 2) {
+        if (result > 0) this.myStepper.next();
         this.openPreDialog();
-      }else{
-        this.myStepper.next();
-        this.myStepper.next();
-        // 解析結果表示 
+      } else if (Math.abs(result) === 3) {
+        if (result > 0) {
+          this.myStepper.next();
+          this.myStepper.next();
+        }
+        this.openStaticResultDialog();
       }
     });
   }
@@ -53,14 +56,32 @@ export class MenuComponent implements OnInit {
   // 解析条件の設定画面を開く
   private openPreDialog(): void {
     this.currentDialog = this.openDialog(SideRightPreComponent);
-    this.currentDialog.afterClosed().subscribe( (result:any) => {
+    this.currentDialog.afterClosed().subscribe((result: number) => {
       // 解析条件が閉じられた時
-      if(result === 0){
-        this.myStepper.previous();
+      if (Math.abs(result) === 1) {
+        if (result > 0) this.myStepper.previous();
         this.openBodyDialog();
-      }else{
-        this.myStepper.next();
-        // 解析結果表示 
+      } else if (Math.abs(result) === 3) {
+        if (result > 0) this.myStepper.next();
+        this.openStaticResultDialog();
+      }
+    });
+  }
+
+  // 解析結果の画面を開く
+  private openStaticResultDialog(): void {
+    this.currentDialog = this.openDialog(SideRightStaticResultComponent);
+    this.currentDialog.afterClosed().subscribe((result: number) => {
+      // 解析条件が閉じられた時
+      if (Math.abs(result) === 2) {
+        if (result > 0) this.myStepper.previous();
+        this.openPreDialog();
+      } else if (Math.abs(result) === 1) {
+        if (result > 0) {
+          this.myStepper.previous();
+          this.myStepper.previous();
+        }
+        this.openBodyDialog();
       }
     });
   }
@@ -111,11 +132,6 @@ export class MenuComponent implements OnInit {
     const inputJson: string = JSON.stringify({});
     const blob = new window.Blob([inputJson], { type: "text/plain" });
     // FileSaver.saveAs(blob, "test.json");
-  }
-
-  // モデルをダウンロードする
-  public download() {
-
   }
 
 
