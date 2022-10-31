@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
-import { LoaderUtils } from 'three/src/loaders/LoaderUtils';
+import * as d3 from 'd3';
 
 import { BufferGeometry, Float32BufferAttribute } from 'three';
 import { SceneService } from './scene.service';
@@ -9,7 +9,9 @@ import { SceneService } from './scene.service';
   providedIn: 'root'
 })
 export class VTKService {
-  constructor(private scene: SceneService) { }
+
+  constructor(private scene: SceneService) {
+  }
 
   public loadVYK(response: string) {
 
@@ -175,14 +177,18 @@ export class VTKService {
       const max_value = Math.max(...scalars);
       const min_value = Math.min(...scalars);
       const newColors = [];
+      // const color = d3.scaleOrdinal().domain(scalars);
+      var f = d3.scaleLinear()
+      .domain([min_value, 0, max_value])
+      .range(["red", "white", "blue"])
 
       for( let i = 0; i < scalars.length; i ++ ){
         const scal = scalars[i];
-        const z = (scal - min_value)/(max_value - min_value)
-        const cls1 = this.contourColor_mesh(z);
-        const r = cls1[0];
-        const g = cls1[1];
-        const b = cls1[2];
+        const sc = f(scal);
+        const cls1 = d3.rgb(sc);
+        const r = cls1.r;
+        const g = cls1.g;
+        const b = cls1.b;
 
         const scolor = new THREE.Color(r, g, b);
 
@@ -220,32 +226,5 @@ export class VTKService {
 
   }
 
-  // コンター図の色を返す
-  // z - 0～1の値
-  private contourColor_mesh(z: number) {
-    let cls = [0, 0, 0];
-    cls[0] = 0;
-    cls[1] = 0;
-    cls[2] = 0;
-    if (z <= 0) {
-      cls[2] = 1;
-    } else if (z < 0.25) {
-      cls[1] = 4 * z;
-      cls[2] = 1;
-    } else if (z < 0.5) {
-      cls[1] = 1.2 - 0.8 * z;
-      cls[2] = 2 - 4 * z;
-    } else if (z < 0.75) {
-      cls[0] = 4 * z - 2;
-      cls[1] = 0.4 + 0.8 * z;
-    } else if (z < 1) {
-      cls[0] = 1;
-      cls[1] = 4 - 4 * z;
-    } else {
-      cls[0] = 1;
-    }
-
-    return cls;
-  }
 
 }
