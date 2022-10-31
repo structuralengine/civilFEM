@@ -1,0 +1,19 @@
+<h1 mat-dialog-title>解析条件の設定</h1>
+
+
+<div mat-dialog-content>
+
+    <div class="my-radio-group">
+        <mat-radio-group aria-label="Select an option">
+            <mat-radio-button value="1" checked>静的解析</mat-radio-button>
+            <mat-radio-button value="2" disabled="true">モード解析</mat-radio-button>
+        </mat-radio-group>
+    </div>
+
+    <app-sheet #grid [options]="options"></app-sheet>
+</div>
+
+<div mat-dialog-actions>
+    <button mat-raised-button color="primary" [mat-dialog-close]="1">戻る</button>
+    <button mat-raised-button color="primary" (click)="create_access_token()">解析結果</button>
+</div>

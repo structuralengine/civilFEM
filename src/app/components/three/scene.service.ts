@@ -169,5 +169,14 @@ export class SceneService {
     };
   }
 
+  public clear(): void {
+    while(this.scene.children.length > 0){
+      const mesh = this.scene.children[0];
+      this.scene.remove(mesh);
+    }
+    // 床面を生成する
+     this.createHelper();
+
+  }
 
 }

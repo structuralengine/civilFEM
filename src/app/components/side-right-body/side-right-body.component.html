@@ -1,2 +1,10 @@
-<p>side-right-body works!</p>
-<app-sheet #grid [options]="options"></app-sheet>
+<h1 mat-dialog-title>高架橋モデルの生成</h1>
+
+<div mat-dialog-content>
+    <app-sheet #grid [options]="options"></app-sheet>
+</div>
+
+<div mat-dialog-actions>
+    <button mat-raised-button color="primary" (click)="apply()">更新</button>
+    <button mat-raised-button color="primary" [mat-dialog-close]="2">解析条件へ</button>
+</div>

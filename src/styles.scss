@@ -5,5 +5,27 @@
 @import '~codemirror/addon/fold/foldgutter.css';
 @import '~codemirror/addon/lint/lint.css';
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+// pqgrid
+@import url("https://unpkg.com/jquery-ui-pack@1.12.3/jquery-ui.css");
+@import url("https://unpkg.com/jquery-ui-pack@1.12.3/jquery-ui.structure.css");
+@import url("https://unpkg.com/jquery-ui-pack@1.12.3/jquery-ui.theme.css");
+@import url("https://unpkg.com/pqgrid@7.5.0/pqgrid.min.css");
+@import "~pqgrid/pqgrid.ui.min.css";
+@import "~pqgrid/themes/gray/pqgrid.css";
+
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+ }
+body {
+    overflow: hidden;
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif; 
+}
+
+// メニュー画面のstepper のコンテンツ
+.mat-horizontal-content-container {
+    display: none;
+}
