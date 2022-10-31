@@ -186,9 +186,9 @@ export class VTKService {
         const scal = scalars[i];
         const sc = f(scal);
         const cls1 = d3.rgb(sc);
-        const r = cls1.r;
-        const g = cls1.g;
-        const b = cls1.b;
+        const r = cls1.r/255;
+        const g = cls1.g/255;
+        const b = cls1.b/255;
 
         const scolor = new THREE.Color(r, g, b);
 

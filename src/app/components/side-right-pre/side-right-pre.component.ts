@@ -50,10 +50,11 @@ export class SideRightPreComponent implements OnInit {
 
   public create_access_token(): void {
 
-    this.get_vtk('assets/test_static.vtk', 0, true);
-    return;
+    // this.get_vtk('assets/test_static.vtk', 0, true);
+    // return;
 
     if(this.data.isCalcrated===true){
+      this.dialogRef.close(3);
       return; // 既に解析していたら、同じ解析は解析しない
     }
 
