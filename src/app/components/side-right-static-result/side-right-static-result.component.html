@@ -4,8 +4,8 @@
     <mat-radio-group aria-labelledby="example-radio-group-label" class="result-radio-group"
         [(ngModel)]="favoriteSeason">
         <mat-radio-button class="result-radio-button"
-        *ngFor="let season of seasons" [value]="season"
-        (change)="radioChange()">
+        *ngFor="let season of seasons; let i = index" [value]="season"
+        (change)="radioChange(i)">
             {{season}}
         </mat-radio-button>
     </mat-radio-group>

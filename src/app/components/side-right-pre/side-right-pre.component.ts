@@ -13,6 +13,7 @@ import pq from "pqgrid";
 export class SideRightPreComponent implements OnInit {
 
   @ViewChild("grid") grid!: SheetComponent;
+  public isLoading = false;
 
   constructor(
     private http: HttpClient,
@@ -58,6 +59,8 @@ export class SideRightPreComponent implements OnInit {
       return; // 既に解析していたら、同じ解析は解析しない
     }
 
+    this.isLoading = true;
+
     const inputVTK = this.data.get_vtk();
 
     const f = new window.File([inputVTK], "generate_bridge.vtk", { type: "text/plain" })
@@ -85,6 +88,7 @@ export class SideRightPreComponent implements OnInit {
       (error) => {
         alert("error create_access_token()");
         console.error(error);
+        this.isLoading = false;
       }
     );
 
@@ -100,6 +104,7 @@ export class SideRightPreComponent implements OnInit {
         (error) => {
           alert(error.message);
           console.error(error);
+          this.isLoading = false;
         }
       );
   }
@@ -122,21 +127,23 @@ export class SideRightPreComponent implements OnInit {
   }
 
   /// 解析結果ファイルを取得する
-  private get_vtk(url: string, index: number, close: boolean): void {
+  private async get_vtk(url: string, index: number, close: boolean) {
 
-    this.http.get(url,{ responseType: 'text' })
+    await this.http.get(url,{ responseType: 'text' })
       .subscribe(event => {
         this.data.set_result_vtk(event, index);
         if(close){
           // 読み取り処理が終わったら閉じる
           this.data.isCalcrated = true;
+          this.isLoading = false;
           this.dialogRef.close(3);
         }
       },
       (error) => {
         alert(error.message);
         console.error(error);
+        this.isLoading = false;
       });
-
+    return;
   }
 }

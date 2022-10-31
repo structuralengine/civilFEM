@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatRadioModule } from '@angular/material/radio';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
@@ -61,6 +62,7 @@ import { SideRightStaticResultComponent } from './components/side-right-static-r
     MatMenuModule,
     MatToolbarModule,
     MatRadioModule,
+    MatProgressSpinnerModule,
     
     CodemirrorModule,
   ],
