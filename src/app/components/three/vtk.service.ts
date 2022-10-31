@@ -12,6 +12,7 @@ export class VTKService {
   constructor(private scene: SceneService) { }
 
   public loadVYK(response: string) {
+
     this.scene.clear();
 
     const res = this.parseASCII(response);
@@ -50,389 +51,167 @@ export class VTKService {
     const positions: number[] = [];
 
     // red, green, blue colors in the range 0 to 1
-    const colors = [];
     const scalars = [];
-
-    // normal vector, one per vertex
-    const normals = [];
-
-    let result;
-
-    // pattern for detecting the end of a number sequence
-    const patWord = /^[^\d.\s-]+/;
-
-    // pattern for reading vertices, 3 floats or integers
-    // const pat3Floats: RegExp = /(\-?\d+\.?[\d\-\+e]*)\s+(\-?\d+\.?[\d\-\+e]*)\s+(\-?\d+\.?[\d\-\+e]*)/g;
 
     // pattern for connectivity, an integer followed by any number of ints
     // the first integer is the number of polygon nodes
     const patConnectivity = /^(\d+)\s+([\s\d]*)/;
 
+    // pattern for detecting the end of a number sequence
+    const patWord = /^[^\d.\s-]+/;
+
     // indicates start of vertex data section
     const patPOINTS = /^POINTS /;
 
-    // indicates start of polygon connectivity section
-    const patPOLYGONS = /^POLYGONS /;
+    // indicates start of vertex data section
+    const patCELLS = /^CELLS /;
+    const Cell8Indices =  [ 0,2,1, 0,3,2, 0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,7,6, 2,3,7, 3,0,7, 0,4,7, 4,5,6, 4,6,7 ];
+    const Cell8EdgeIndices = [ 4,0,1,5,6,2,1,5,4,0,3,7,6,2,3,7,6,5,4,7 ];
 
-    // indicates start of triangle strips section
-    const patTRIANGLE_STRIPS = /^TRIANGLE_STRIPS /;
-
-    // POINT_DATA number_of_values
-    const patPOINT_DATA = /^POINT_DATA[ ]+(\d+)/;
-
-    // CELL_DATA number_of_polys
-    const patCELL_DATA = /^CELL_DATA[ ]+(\d+)/;
-
-    // Start of color section
-    const patCOLOR_SCALARS = /^SCALARS[ ]+(\w+)[ ]+3/;
-
-    // NORMALS Normals float
-    const patNORMALS = /^NORMALS[ ]+(\w+)[ ]+(\w+)/;
-
-    let inPointsSection = false;
-    let inPolygonsSection = false;
-    let inTriangleStripSection = false;
-    let inPointDataSection = false;
-    let inCellDataSection = false;
-    let inColorSection = false;
-    let inNormalsSection = false;
+    // indicates start of vertex data section
+    const patCELLDATA = /^CELL_DATA /;
 
     const lines = data.split( '\n' );
+    let i = 0, ii = 0;
 
-    for ( const i in lines ) {
-
-      const line = lines[ i ].trim();
-
-      if ( line.indexOf( 'DATASET' ) === 0 ) {
-
-        const dataset = line.split( ' ' )[ 1 ];
-
-        if ( dataset !== 'POLYDATA' && dataset !== 'UNSTRUCTURED_GRID' ) {
-          throw new Error( 'Unsupported DATASET type: ' + dataset );
+    // POINT 座標を取得
+    while(ii < lines.length){
+      let line = lines[ ii ].trim();
+      if ( patPOINTS.exec( line ) !== null ) {
+        const columns = line.split(' ');
+        const rows = parseInt(columns[1]);
+        while(( patWord.exec( lines[ ii ] ) !== null )){
+          ii++;
         }
-
-      } else if ( inPointsSection ) {
-
-        // get the vertices
-        result = line.split(' ');
-        // while ( ( result = pat3Floats.exec( line ) ) !== null ) {
-
-          if ( patWord.exec( line ) == null ) {
-            const x = parseFloat( result[ 0 ] );
-            const y = parseFloat( result[ 1 ] );
-            const z = parseFloat( result[ 2 ] );
-            positions.push( x, y, z );
-          }
-
-        // }
-
-      } else if ( inPolygonsSection ) {
-
-        if ( ( result = patConnectivity.exec( line ) ) !== null ) {
-
-          // numVertices i0 i1 i2 ...
-          const numVertices = parseInt( result[ 1 ] );
-          const inds = result[ 2 ].split( /\s+/ );
-
-          if ( numVertices >= 3 ) {
-
-            const i0 = parseInt( inds[ 0 ] );
-            let k = 1;
-            // split the polygon in numVertices - 2 triangles
-            for ( let j = 0; j < numVertices - 2; ++ j ) {
-
-              const i1 = parseInt( inds[ k ] );
-              const i2 = parseInt( inds[ k + 1 ] );
-              indices.push( i0, i1, i2 );
-              k ++;
-
-            }
-
-          }
-
+        for(let r=ii;r<ii+rows;r++){
+          line = lines[ r ].trim();
+          const result = line.split(' ');
+          const x = parseFloat( result[ 0 ] );
+          const y = parseFloat( result[ 1 ] );
+          const z = parseFloat( result[ 2 ] );
+          positions.push( x, y, z );
         }
-
-      } else if ( inTriangleStripSection ) {
-
-        if ( ( result = patConnectivity.exec( line ) ) !== null ) {
-
-          // numVertices i0 i1 i2 ...
-          const numVertices = parseInt( result[ 1 ] );
-          const inds = result[ 2 ].split( /\s+/ );
-
-          if ( numVertices >= 3 ) {
-
-            // split the polygon in numVertices - 2 triangles
-            for ( let j = 0; j < numVertices - 2; j ++ ) {
-
-              if ( j % 2 === 1 ) {
-
-                const i0 = parseInt( inds[ j ] );
-                const i1 = parseInt( inds[ j + 2 ] );
-                const i2 = parseInt( inds[ j + 1 ] );
-                indices.push( i0, i1, i2 );
-
-              } else {
-
-                const i0 = parseInt( inds[ j ] );
-                const i1 = parseInt( inds[ j + 1 ] );
-                const i2 = parseInt( inds[ j + 2 ] );
-                indices.push( i0, i1, i2 );
-
-              }
-
-            }
-
-          }
-
-        }
-
-      } else if ( inPointDataSection || inCellDataSection ) {
-
-        if ( inColorSection ) {
-
-          // Get the colors
-          result = line.split(' ');
-          // while ( ( result = pat3Floats.exec(  ) ) !== null ) {
-
-            if ( patWord.exec( line ) == null ) {
-
-              if(result.length < 3){
-                const a = parseFloat( line );
-                if(!isNaN(a))
-                  scalars.push(a);
-              } else {
-                const r = parseFloat( result[ 0 ] );
-                const g = parseFloat( result[ 1 ] );
-                const b = parseFloat( result[ 2 ] );
-                colors.push( r, g, b );
-              }
-            }
-
-          // }
-
-        } else if ( inNormalsSection ) {
-
-          // Get the normal vectors
-          result = line.split(' ');
-          // while ( ( result = pat3Floats.exec( line ) ) !== null ) {
-
-            if ( patWord.exec( line ) == null ) {
-              const nx = parseFloat( result[ 0 ] );
-              const ny = parseFloat( result[ 1 ] );
-              const nz = parseFloat( result[ 2 ] );
-              normals.push( nx, ny, nz );
-            }
-          // }
-
-        } else {
-          // CELLS
-          if ( ( result = patConnectivity.exec( line ) ) !== null ) {
-
-            // numVertices i0 i1 i2 ...
-            const numVertices = parseInt( result[ 1 ] );
-            const inds = result[ 2 ].split( /\s+/ );
-
-            if ( numVertices == 8 ) {
-              // キューブ
-              [ 0,2,1, 0,3,2, 0,1,5, 0,5,4, 1,2,6, 1,6,5, 2,7,6, 2,3,7, 3,0,7, 0,4,7, 4,5,6, 4,6,7 ]
-              .forEach( i => indices.push(parseInt(inds[i])));
-
-              // ライン
-              const edge_indices: number[] = new Array();
-              [ 4,0,1,5,6,2,1,5,4,0,3,7,6,2,3,7,6,5,4,7 ]
-              .forEach( i => {
-                edge_indices.push(parseInt(inds[i]))
-              });
-              const points: THREE.Vector3[] = [];
-              edge_indices.forEach( i => {
-                const x = positions[i * 3];
-                const y = positions[i * 3 + 1];
-                const z = positions[i * 3 + 2];
-                points.push( new THREE.Vector3( x, y, z ) );
-              });
-              const geometry = new THREE.BufferGeometry().setFromPoints( points );
-              edge_points.push(geometry);
-            }
-
-          }
-        }
-
+        i = ii + rows;
+        break;
       }
-
-      if ( patPOLYGONS.exec( line ) !== null ) {
-
-        inPolygonsSection = true;
-        inPointsSection = false;
-        inTriangleStripSection = false;
-
-      } else if ( patPOINTS.exec( line ) !== null ) {
-
-        inPolygonsSection = false;
-        inPointsSection = true;
-        inTriangleStripSection = false;
-
-      } else if ( patTRIANGLE_STRIPS.exec( line ) !== null ) {
-
-        inPolygonsSection = false;
-        inPointsSection = false;
-        inTriangleStripSection = true;
-
-      } else if ( patPOINT_DATA.exec( line ) !== null ) {
-
-        inPointDataSection = true;
-        inPointsSection = false;
-        inPolygonsSection = false;
-        inTriangleStripSection = false;
-
-      } else if (line.toLowerCase().includes('cells')) {
-
-        inCellDataSection = true;
-        inPointsSection = false;
-        inPolygonsSection = false;
-        inTriangleStripSection = false;
-        inColorSection = false;
-        inNormalsSection = false;
-
-      } else if ( patCELL_DATA.exec( line ) !== null ) {
-
-        inCellDataSection = true;
-        inPointsSection = false;
-        inPolygonsSection = false;
-        inTriangleStripSection = false;
-
-      } else if ( patCOLOR_SCALARS.exec( line ) !== null ) {
-        inColorSection = true;
-        inNormalsSection = false;
-        inPointsSection = false;
-        inPolygonsSection = false;
-        inTriangleStripSection = false;
-
-      } else if (line.toLowerCase().includes('scalars')) {
-        inColorSection = true;
-        inNormalsSection = false;
-        inPointsSection = false;
-        inPolygonsSection = false;
-        inTriangleStripSection = false;
-
-      } else if ( patNORMALS.exec( line ) !== null ) {
-
-        inNormalsSection = true;
-        inColorSection = false;
-        inPointsSection = false;
-        inPolygonsSection = false;
-        inTriangleStripSection = false;
-
-      }
-
+      ii++;
     }
+    ii = i;
+
+    // CELLS キューブ
+    while(ii < lines.length){
+      let line = lines[ ii ].trim();
+      if ( patCELLS.exec( line ) !== null ) {
+        const columns = line.split(' ');
+        const rows = parseInt(columns[1]);
+        while(( patWord.exec( lines[ ii ] ) !== null )){
+          ii++;
+        }
+        for(let r=ii;r<ii+rows;r++){
+          line = lines[ r ].trim();
+          const result = patConnectivity.exec( line )
+          // numVertices i0 i1 i2 ...
+          const numVertices = parseInt( result[ 1 ] );
+          const inds = result[ 2 ].split( /\s+/ );
+
+          if ( numVertices == 8 ) {
+            // キューブ
+            Cell8Indices.forEach( i => indices.push(parseInt(inds[i])));
+            // ライン
+            const edge_indices: number[] = new Array();
+            Cell8EdgeIndices.forEach( i => {
+              edge_indices.push(parseInt(inds[i]))
+            });
+            const points: THREE.Vector3[] = [];
+            edge_indices.forEach( i => {
+              const x = positions[i * 3];
+              const y = positions[i * 3 + 1];
+              const z = positions[i * 3 + 2];
+              points.push( new THREE.Vector3( x, y, z ) );
+            });
+            const geometry = new THREE.BufferGeometry().setFromPoints( points );
+            edge_points.push(geometry);
+          }
+        }
+        i = ii + rows;
+        break;
+      }
+      ii++;
+    }
+    ii = i;
+
+    // CELL_DATAを取得
+    while(ii < lines.length){
+      let line = lines[ ii ].trim();
+      if ( patCELLDATA.exec( line ) !== null ) {
+        const columns = line.split(' ');
+        const rows = parseInt(columns[1]);
+        // 冒頭の文字を読み飛ばす
+        while(( patWord.exec( lines[ ii ] ) !== null )){
+          ii++;
+        }
+        // get the vertices
+        for(let r=ii;r<ii+rows;r++){
+          line = lines[ r ].trim();
+          const x = parseFloat( line );
+          scalars.push( x );
+        }
+        i = ii + rows;
+        break;
+      }
+      ii++;
+    }
+    ii = i;
+
 
     // box を生成する
     let geo_box = new BufferGeometry();
     geo_box.setIndex( indices );
     geo_box.setAttribute( 'position', new Float32BufferAttribute( positions, 3 ) );
 
+    const color = new THREE.Color(0xf0f0f0);
 
-    if ( normals.length === positions.length ) {
+    if ( scalars.length === edge_points.length ){
+      const max_value = Math.max(...scalars);
+      const min_value = Math.min(...scalars);
+      const newColors = [];
 
-      geo_box.setAttribute( 'normal', new Float32BufferAttribute( normals, 3 ) );
+      for( let i = 0; i < scalars.length; i ++ ){
+        const scal = scalars[i];
+        const z = (scal - min_value)/(max_value - min_value)
+        const cls1 = this.contourColor_mesh(z);
+        const r = cls1[0];
+        const g = cls1[1];
+        const b = cls1[2];
 
-    }
+        const scolor = new THREE.Color(r, g, b);
 
-    if ( colors.length !== indices.length ) {
-
-      // stagger
-      if ( colors.length === positions.length ) {
-        geo_box.setAttribute( 'color', new Float32BufferAttribute( colors, 3 ) );
-
-      } else if ( scalars.length === edge_points.length ) {
-
-        // デフォルトのカラー
-        geo_box = geo_box.toNonIndexed();
-        const attributes = geo_box.attributes;
-        const position = attributes['position'];
-        const count = position.count;
-        const numTriangles = count / 3;
-
-        const newColors = [];
-
-        const color = new THREE.Color(0xf0f0f0);
-
-        for ( let i = 0; i < numTriangles; i ++ ) {
-
-          const r = color.r;
-          const g = color.g;
-          const b = color.b;
-
-          newColors.push( r, g, b );
-          newColors.push( r, g, b );
-          newColors.push( r, g, b );
-
+        for ( let j = 0; j < 36; j ++ ) {
+          newColors.push( scolor.r, scolor.g, scolor.b );
         }
-
-        geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
-
-      
-      } else {
-
-        // デフォルトのカラー
-        geo_box = geo_box.toNonIndexed();
-        const attributes = geo_box.attributes;
-        const position = attributes['position'];
-        const count = position.count;
-        const numTriangles = count / 3;
-  
-        const newColors = [];
-
-        const color = new THREE.Color(0xf0f0f0);
-
-        for ( let i = 0; i < numTriangles; i ++ ) {
-
-          const r = color.r;
-          const g = color.g;
-          const b = color.b;
-
-          newColors.push( r, g, b );
-          newColors.push( r, g, b );
-          newColors.push( r, g, b );
-
-        }
-
-        geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
-
       }
 
+      geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
+
     } else {
-
-      // cell
-
+      // デフォルトのカラー
       geo_box = geo_box.toNonIndexed();
       const attributes = geo_box.attributes;
       const position = attributes['position'];
       const count = position.count;
       const numTriangles = count / 3;
 
-      if ( colors.length === ( numTriangles * 3 ) ) {
+      const newColors = [];
 
-        const newColors = [];
-
-        for ( let i = 0; i < numTriangles; i ++ ) {
-
-          const r = colors[ 3 * i + 0 ];
-          const g = colors[ 3 * i + 1 ];
-          const b = colors[ 3 * i + 2 ];
-
-          newColors.push( r, g, b );
-          newColors.push( r, g, b );
-          newColors.push( r, g, b );
-
-        }
-        geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
-
+      for ( let i = 0; i < numTriangles; i ++ ) {
+        newColors.push( color.r, color.g, color.b );
+        newColors.push( color.r, color.g, color.b );
+        newColors.push( color.r, color.g, color.b );
       }
 
-
+      geo_box.setAttribute( 'color', new Float32BufferAttribute( newColors, 3 ) );
     }
+
 
     return {
       box: geo_box,
@@ -441,837 +220,32 @@ export class VTKService {
 
   }
 
-  /*
-  private parse( data: string) : THREE.BufferGeometry{//} | ArrayBuffer) {
-
-		// get the 5 first lines of the files to check if there is the key word binary
-		const meta = LoaderUtils.decodeText( new Uint8Array( data, 0, 250 ) ).split( '\n' );
-
-		if ( meta[ 0 ].indexOf( 'xml' ) !== - 1 ) {
-
-			return this.parseXML( LoaderUtils.decodeText( data ) );
-
-		} else if ( meta[ 2 ].includes( 'ASCII' ) ) {
-
-			return this.parseASCII( data );
-
-		} else {
-
-			return this.parseBinary( data );
-
-		}
-
-	}
-  */
-
-  /*
-  private findString( buffer: Uint8Array, start: number ): {start: number, end: number, next: number, parsedString: string } {
-
-    let index = start;
-    let c = buffer[ index ];
-    const s = [];
-    while ( c !== 10 ) {
-
-      s.push( String.fromCharCode( c ) );
-      index ++;
-      c = buffer[ index ];
-
-    }
-
-    return { 
-      start: start,
-      end: index,
-      next: index + 1,
-      parsedString: s.join( '' ) 
-    };
-
-  }
-  */
-  /*
-  private parseBinary( data: ArrayBuffer ) {
-
-    const buffer = new Uint8Array( data );
-    const dataView = new DataView( data );
-
-    // Points and normals, by default, are empty
-    let points: Float32Array = new Float32Array();
-    let normals: Float32Array = new Float32Array();
-    let indices: Uint32Array = new Uint32Array();
-
-    let index = 0;
-
-
-
-    let state, line;
-
-    while ( true ) {
-
-      // Get a string
-      state = this.findString( buffer, index );
-      line = state.parsedString;
-
-      if ( line.indexOf( 'DATASET' ) === 0 ) {
-
-        const dataset = line.split( ' ' )[ 1 ];
-
-        if ( dataset !== 'POLYDATA' ) throw new Error( 'Unsupported DATASET type: ' + dataset );
-
-      } else if ( line.indexOf( 'POINTS' ) === 0 ) {
-
-        // Add the points
-        const numberOfPoints = parseInt( line.split( ' ' )[ 1 ], 10 );
-
-        // Each point is 3 4-byte floats
-        const count = numberOfPoints * 4 * 3;
-
-        points = new Float32Array( numberOfPoints * 3 );
-
-        let pointIndex = state.next;
-        for ( let i = 0; i < numberOfPoints; i ++ ) {
-
-          points[ 3 * i ] = dataView.getFloat32( pointIndex, false );
-          points[ 3 * i + 1 ] = dataView.getFloat32( pointIndex + 4, false );
-          points[ 3 * i + 2 ] = dataView.getFloat32( pointIndex + 8, false );
-          pointIndex = pointIndex + 12;
-
-        }
-
-        // increment our next pointer
-        state.next = state.next + count + 1;
-
-      } else if ( line.indexOf( 'TRIANGLE_STRIPS' ) === 0 ) {
-
-        const numberOfStrips = parseInt( line.split( ' ' )[ 1 ], 10 );
-        const size = parseInt( line.split( ' ' )[ 2 ], 10 );
-        // 4 byte integers
-        const count = size * 4;
-
-        indices = new Uint32Array( 3 * size - 9 * numberOfStrips );
-        let indicesIndex = 0;
-
-        let pointIndex = state.next;
-        for ( let i = 0; i < numberOfStrips; i ++ ) {
-
-          // For each strip, read the first value, then record that many more points
-          const indexCount = dataView.getInt32( pointIndex, false );
-          const strip = [];
-          pointIndex += 4;
-          for ( let s = 0; s < indexCount; s ++ ) {
-
-            strip.push( dataView.getInt32( pointIndex, false ) );
-            pointIndex += 4;
-
-          }
-
-          // retrieves the n-2 triangles from the triangle strip
-          for ( let j = 0; j < indexCount - 2; j ++ ) {
-
-            if ( j % 2 ) {
-
-              indices[ indicesIndex ++ ] = strip[ j ];
-              indices[ indicesIndex ++ ] = strip[ j + 2 ];
-              indices[ indicesIndex ++ ] = strip[ j + 1 ];
-
-            } else {
-
-
-              indices[ indicesIndex ++ ] = strip[ j ];
-              indices[ indicesIndex ++ ] = strip[ j + 1 ];
-              indices[ indicesIndex ++ ] = strip[ j + 2 ];
-
-            }
-
-          }
-
-        }
-
-        // increment our next pointer
-        state.next = state.next + count + 1;
-
-      } else if ( line.indexOf( 'POLYGONS' ) === 0 ) {
-
-        const numberOfStrips = parseInt( line.split( ' ' )[ 1 ], 10 );
-        const size = parseInt( line.split( ' ' )[ 2 ], 10 );
-        // 4 byte integers
-        const count = size * 4;
-
-        indices = new Uint32Array( 3 * size - 9 * numberOfStrips );
-        let indicesIndex = 0;
-
-        let pointIndex = state.next;
-        for ( let i = 0; i < numberOfStrips; i ++ ) {
-
-          // For each strip, read the first value, then record that many more points
-          const indexCount = dataView.getInt32( pointIndex, false );
-          const strip = [];
-          pointIndex += 4;
-          for ( let s = 0; s < indexCount; s ++ ) {
-
-            strip.push( dataView.getInt32( pointIndex, false ) );
-            pointIndex += 4;
-
-          }
-
-          // divide the polygon in n-2 triangle
-          for ( let j = 1; j < indexCount - 1; j ++ ) {
-
-            indices[ indicesIndex ++ ] = strip[ 0 ];
-            indices[ indicesIndex ++ ] = strip[ j ];
-            indices[ indicesIndex ++ ] = strip[ j + 1 ];
-
-          }
-
-        }
-
-        // increment our next pointer
-        state.next = state.next + count + 1;
-
-      } else if ( line.indexOf( 'POINT_DATA' ) === 0 ) {
-
-        const numberOfPoints = parseInt( line.split( ' ' )[ 1 ], 10 );
-
-        // Grab the next line
-        state = this.findString( buffer, state.next );
-
-        // Now grab the binary data
-        const count = numberOfPoints * 4 * 3;
-
-        normals = new Float32Array( numberOfPoints * 3 );
-        let pointIndex = state.next;
-        for ( let i = 0; i < numberOfPoints; i ++ ) {
-
-          normals[ 3 * i ] = dataView.getFloat32( pointIndex, false );
-          normals[ 3 * i + 1 ] = dataView.getFloat32( pointIndex + 4, false );
-          normals[ 3 * i + 2 ] = dataView.getFloat32( pointIndex + 8, false );
-          pointIndex += 12;
-
-        }
-
-        // Increment past our data
-        state.next = state.next + count;
-
-      }
-
-      // Increment index
-      index = state.next;
-
-      if ( index >= buffer.byteLength ) {
-
-        break;
-
-      }
-
-    }
-
-    const geometry = new BufferGeometry();
-    geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
-    geometry.setAttribute( 'position', new THREE.BufferAttribute( points, 3 ) );
-
-    if ( normals.length === points.length ) {
-
-      geometry.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
-
-    }
-
-    return geometry;
-
-  }
-  */
-  /*
-  private Float32Concat( first: number[], second: number[] ) {
-
-    const firstLength = first.length;
-    const result = new Float32Array( firstLength + second.length );
-
-    result.set( first );
-    result.set( second, firstLength );
-
-    return result;
-
-  }
-  */
-  /*
-  private Int32Concat( first: number[], second: number[] ) {
-
-    const firstLength = first.length, result = new Int32Array( firstLength + second.length );
-
-    result.set( first );
-    result.set( second, firstLength );
-
-    return result;
-
-  }
-  */
-  /*
-  private xmlToJson( xml: HTMLElement ): any {
-
-    // Create the return object
-    let obj: any = {};
-
-    if ( xml.nodeType === 1 ) { // element
-
-      // do attributes
-
-      if ( xml.attributes ) {
-
-        if ( xml.attributes.length > 0 ) {
-
-          obj[ 'attributes' ] = {};
-
-          for ( let j = 0; j < xml.attributes.length; j ++ ) {
-
-            const attribute = xml.attributes.item( j );
-            if(attribute == null) continue;
-            const nodeValue = attribute.nodeValue;
-            if(nodeValue == null) continue;
-            obj[ 'attributes' ][ attribute.nodeName ] = nodeValue.trim();
-
-          }
-
-        }
-
-      }
-
-    } else if ( xml.nodeType === 3 ) { // text
-
-      const nodeValue = xml.nodeValue;
-      if(nodeValue != null)
-        obj = nodeValue.trim();
-
-    }
-
-    // do children
-    if ( xml.hasChildNodes() ) {
-
-      for ( let i = 0; i < xml.childNodes.length; i ++ ) {
-
-        const item = xml.childNodes.item( i );
-        const nodeName = item.nodeName;
-
-        if ( typeof obj[ nodeName ] === 'undefined' ) {
-
-          const tmp = this.xmlToJson( item );
-
-          if ( tmp !== '' ) obj[ nodeName ] = tmp;
-
-        } else {
-
-          if ( typeof obj[ nodeName ].push === 'undefined' ) {
-
-            const old = obj[ nodeName ];
-            obj[ nodeName ] = [ old ];
-
-          }
-
-          const tmp = this.xmlToJson( item );
-
-          if ( tmp !== '' ) obj[ nodeName ].push( tmp );
-
-        }
-
-      }
-
-    }
-
-    return obj;
-
-  }
-  */
-  /*
-  // Taken from Base64-js
-  private Base64toByteArray( b64: string ) {
-
-    const Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
-    const revLookup = [];
-    const code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-    for ( let i = 0, l = code.length; i < l; ++ i ) {
-
-      revLookup[ code.charCodeAt( i ) ] = i;
-
-    }
-
-    revLookup[ '-'.charCodeAt( 0 ) ] = 62;
-    revLookup[ '_'.charCodeAt( 0 ) ] = 63;
-
-    const len = b64.length;
-
-    if ( len % 4 > 0 ) {
-
-      throw new Error( 'Invalid string. Length must be a multiple of 4' );
-
-    }
-
-    const placeHolders = b64[ len - 2 ] === '=' ? 2 : b64[ len - 1 ] === '=' ? 1 : 0;
-    const arr = new Arr( len * 3 / 4 - placeHolders );
-    const l = placeHolders > 0 ? len - 4 : len;
-
-    let L = 0;
-    let i, j;
-
-    for ( i = 0, j = 0; i < l; i += 4, j += 3 ) {
-
-      const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 18 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] << 12 ) | ( revLookup[ b64.charCodeAt( i + 2 ) ] << 6 ) | revLookup[ b64.charCodeAt( i + 3 ) ];
-      arr[ L ++ ] = ( tmp & 0xFF0000 ) >> 16;
-      arr[ L ++ ] = ( tmp & 0xFF00 ) >> 8;
-      arr[ L ++ ] = tmp & 0xFF;
-
-    }
-
-    if ( placeHolders === 2 ) {
-
-      const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 2 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] >> 4 );
-      arr[ L ++ ] = tmp & 0xFF;
-
-    } else if ( placeHolders === 1 ) {
-
-      const tmp = ( revLookup[ b64.charCodeAt( i ) ] << 10 ) | ( revLookup[ b64.charCodeAt( i + 1 ) ] << 4 ) | ( revLookup[ b64.charCodeAt( i + 2 ) ] >> 2 );
-      arr[ L ++ ] = ( tmp >> 8 ) & 0xFF;
-      arr[ L ++ ] = tmp & 0xFF;
-
-    }
-
-    return arr;
-
-  }
-  */
-  /*
-  private parseDataArray( ele: any, compressed, json: any ) {
-
-    let numBytes = 0;
-
-    if ( json.attributes.header_type === 'UInt64' ) {
-
-      numBytes = 8;
-
-    }	else if ( json.attributes.header_type === 'UInt32' ) {
-
-      numBytes = 4;
-
-    }
-
-    let txt, content;
-
-    // Check the format
-    if ( ele.attributes.format === 'binary' && compressed ) {
-
-      if ( ele.attributes.type === 'Float32' ) {
-
-        txt = new Float32Array( );
-
-      } else if ( ele.attributes.type === 'Int64' ) {
-
-        txt = new Int32Array( );
-
-      }
-
-      // VTP data with the header has the following structure:
-      // [#blocks][#u-size][#p-size][#c-size-1][#c-size-2]...[#c-size-#blocks][DATA]
-      //
-      // Each token is an integer value whose type is specified by "header_type" at the top of the file (UInt32 if no type specified). The token meanings are:
-      // [#blocks] = Number of blocks
-      // [#u-size] = Block size before compression
-      // [#p-size] = Size of last partial block (zero if it not needed)
-      // [#c-size-i] = Size in bytes of block i after compression
-      //
-      // The [DATA] portion stores contiguously every block appended together. The offset from the beginning of the data section to the beginning of a block is
-      // computed by summing the compressed block sizes from preceding blocks according to the header.
-
-      const rawData = ele[ '#text' ];
-
-      const byteData = this.Base64toByteArray( rawData );
-
-      let blocks = byteData[ 0 ];
-      for ( let i = 1; i < numBytes - 1; i ++ ) {
-
-        blocks = blocks | ( byteData[ i ] << ( i * numBytes ) );
-
-      }
-
-      let headerSize = ( blocks + 3 ) * numBytes;
-      const padding = ( ( headerSize % 3 ) > 0 ) ? 3 - ( headerSize % 3 ) : 0;
-      headerSize = headerSize + padding;
-
-      const dataOffsets = [];
-      let currentOffset = headerSize;
-      dataOffsets.push( currentOffset );
-
-      // Get the blocks sizes after the compression.
-      // There are three blocks before c-size-i, so we skip 3*numBytes
-      const cSizeStart = 3 * numBytes;
-
-      for ( let i = 0; i < blocks; i ++ ) {
-
-        let currentBlockSize = byteData[ i * numBytes + cSizeStart ];
-
-        for ( let j = 1; j < numBytes - 1; j ++ ) {
-
-          // Each data point consists of 8 bytes regardless of the header type
-          currentBlockSize = currentBlockSize | ( byteData[ i * numBytes + cSizeStart + j ] << ( j * 8 ) );
-
-        }
-
-        currentOffset = currentOffset + currentBlockSize;
-        dataOffsets.push( currentOffset );
-
-      }
-
-      for ( let i = 0; i < dataOffsets.length - 1; i ++ ) {
-
-        const data = fflate.unzlibSync( byteData.slice( dataOffsets[ i ], dataOffsets[ i + 1 ] ) ); // eslint-disable-line no-undef
-        content = data.buffer;
-
-        if ( ele.attributes.type === 'Float32' ) {
-
-          content = new Float32Array( content );
-          txt = this.Float32Concat( txt, content );
-
-        } else if ( ele.attributes.type === 'Int64' ) {
-
-          content = new Int32Array( content );
-          txt = this.Int32Concat( txt, content );
-
-        }
-
-      }
-
-      delete ele[ '#text' ];
-
-      if ( ele.attributes.type === 'Int64' ) {
-
-        if ( ele.attributes.format === 'binary' ) {
-
-          txt = txt.filter( function ( el, idx ) {
-
-            if ( idx % 2 !== 1 ) return true;
-
-          } );
-
-        }
-
-      }
-
+  // コンター図の色を返す
+  // z - 0～1の値
+  private contourColor_mesh(z: number) {
+    let cls = [0, 0, 0];
+    cls[0] = 0;
+    cls[1] = 0;
+    cls[2] = 0;
+    if (z <= 0) {
+      cls[2] = 1;
+    } else if (z < 0.25) {
+      cls[1] = 4 * z;
+      cls[2] = 1;
+    } else if (z < 0.5) {
+      cls[1] = 1.2 - 0.8 * z;
+      cls[2] = 2 - 4 * z;
+    } else if (z < 0.75) {
+      cls[0] = 4 * z - 2;
+      cls[1] = 0.4 + 0.8 * z;
+    } else if (z < 1) {
+      cls[0] = 1;
+      cls[1] = 4 - 4 * z;
     } else {
-
-      if ( ele.attributes.format === 'binary' && ! compressed ) {
-
-        content = this.Base64toByteArray( ele[ '#text' ] );
-
-        //  VTP data for the uncompressed case has the following structure:
-        // [#bytes][DATA]
-        // where "[#bytes]" is an integer value specifying the number of bytes in the block of data following it.
-        content = content.slice( numBytes ).buffer;
-
-      } else {
-
-        if ( ele[ '#text' ] ) {
-
-          content = ele[ '#text' ].split( /\s+/ ).filter( function ( el ) {
-
-            if ( el !== '' ) return el;
-
-          } );
-
-        } else {
-
-          content = new Int32Array( 0 ).buffer;
-
-        }
-
-      }
-
-      delete ele[ '#text' ];
-
-      // Get the content and optimize it
-      if ( ele.attributes.type === 'Float32' ) {
-
-        txt = new Float32Array( content );
-
-      } else if ( ele.attributes.type === 'Int32' ) {
-
-        txt = new Int32Array( content );
-
-      } else if ( ele.attributes.type === 'Int64' ) {
-
-        txt = new Int32Array( content );
-
-        if ( ele.attributes.format === 'binary' ) {
-
-          txt = txt.filter( ( el, idx ) => {
-
-            if ( idx % 2 !== 1 ) return true;
-
-          } );
-
-        }
-
-      }
-
-    } // endif ( ele.attributes.format === 'binary' && compressed )
-
-    return txt;
-
-  }
-  */
-  /*
-  private parseXML( stringFile: string ) {
-
-    // Changes XML to JSON, based on https://davidwalsh.name/convert-xml-json
-
-    // Main part
-    // Get Dom
-    const dom = new DOMParser().parseFromString( stringFile, 'application/xml' );
-
-    // Get the doc
-    const doc = dom.documentElement;
-    // Convert to json
-    const json = this.xmlToJson( doc );
-    let points = new Float32Array();;
-    let normals = new Float32Array();
-    let indices = new Uint32Array();
-
-    if ( json.PolyData ) {
-
-      const piece = json.PolyData.Piece;
-      const compressed = json.attributes.hasOwnProperty( 'compressor' );
-
-      // Can be optimized
-      // Loop through the sections
-      const sections = [ 'PointData', 'Points', 'Strips', 'Polys' ];// +['CellData', 'Verts', 'Lines'];
-      let sectionIndex = 0;
-      const numberOfSections = sections.length;
-
-      while ( sectionIndex < numberOfSections ) {
-
-        const section = piece[ sections[ sectionIndex ] ];
-
-        // If it has a DataArray in it
-
-        if ( section && section.DataArray ) {
-
-          // Depending on the number of DataArrays
-
-          let arr;
-
-          if ( Object.prototype.toString.call( section.DataArray ) === '[object Array]' ) {
-
-            arr = section.DataArray;
-
-          } else {
-
-            arr = [ section.DataArray ];
-
-          }
-
-          let dataArrayIndex = 0;
-          const numberOfDataArrays = arr.length;
-
-          while ( dataArrayIndex < numberOfDataArrays ) {
-
-            // Parse the DataArray
-            if ( ( '#text' in arr[ dataArrayIndex ] ) && ( arr[ dataArrayIndex ][ '#text' ].length > 0 ) ) {
-
-              arr[ dataArrayIndex ].text = this.parseDataArray( arr[ dataArrayIndex ], compressed, json );
-
-            }
-
-            dataArrayIndex ++;
-
-          }
-
-          switch ( sections[ sectionIndex ] ) {
-
-            // if iti is point data
-            case 'PointData':
-
-              {
-
-                const numberOfPoints = parseInt( piece.attributes.NumberOfPoints );
-                const normalsName = section.attributes.Normals;
-
-                if ( numberOfPoints > 0 ) {
-
-                  for ( let i = 0, len = arr.length; i < len; i ++ ) {
-
-                    if ( normalsName === arr[ i ].attributes.Name ) {
-
-                      const components = arr[ i ].attributes.NumberOfComponents;
-                      normals = new Float32Array( numberOfPoints * components );
-                      normals.set( arr[ i ].text, 0 );
-
-                    }
-
-                  }
-
-                }
-
-              }
-
-              break;
-
-            // if it is points
-            case 'Points':
-
-              {
-
-                const numberOfPoints = parseInt( piece.attributes.NumberOfPoints );
-
-                if ( numberOfPoints > 0 ) {
-
-                  const components = section.DataArray.attributes.NumberOfComponents;
-                  points = new Float32Array( numberOfPoints * components );
-                  points.set( section.DataArray.text, 0 );
-
-                }
-
-              }
-
-              break;
-
-            // if it is strips
-            case 'Strips':
-
-              {
-
-                const numberOfStrips = parseInt( piece.attributes.NumberOfStrips );
-
-                if ( numberOfStrips > 0 ) {
-
-                  const connectivity = new Int32Array( section.DataArray[ 0 ].text.length );
-                  const offset = new Int32Array( section.DataArray[ 1 ].text.length );
-                  connectivity.set( section.DataArray[ 0 ].text, 0 );
-                  offset.set( section.DataArray[ 1 ].text, 0 );
-
-                  const size = numberOfStrips + connectivity.length;
-                  indices = new Uint32Array( 3 * size - 9 * numberOfStrips );
-
-                  let indicesIndex = 0;
-
-                  for ( let i = 0, len = numberOfStrips; i < len; i ++ ) {
-
-                    const strip = [];
-
-                    for ( let s = 0, len1 = offset[ i ], len0 = 0; s < len1 - len0; s ++ ) {
-
-                      strip.push( connectivity[ s ] );
-
-                      if ( i > 0 ) len0 = offset[ i - 1 ];
-
-                    }
-
-                    for ( let j = 0, len1 = offset[ i ], len0 = 0; j < len1 - len0 - 2; j ++ ) {
-
-                      if ( j % 2 ) {
-
-                        indices[ indicesIndex ++ ] = strip[ j ];
-                        indices[ indicesIndex ++ ] = strip[ j + 2 ];
-                        indices[ indicesIndex ++ ] = strip[ j + 1 ];
-
-                      } else {
-
-                        indices[ indicesIndex ++ ] = strip[ j ];
-                        indices[ indicesIndex ++ ] = strip[ j + 1 ];
-                        indices[ indicesIndex ++ ] = strip[ j + 2 ];
-
-                      }
-
-                      if ( i > 0 ) len0 = offset[ i - 1 ];
-
-                    }
-
-                  }
-
-                }
-
-              }
-
-              break;
-
-            // if it is polys
-            case 'Polys':
-
-              {
-
-                const numberOfPolys = parseInt( piece.attributes.NumberOfPolys );
-
-                if ( numberOfPolys > 0 ) {
-
-                  const connectivity = new Int32Array( section.DataArray[ 0 ].text.length );
-                  const offset = new Int32Array( section.DataArray[ 1 ].text.length );
-                  connectivity.set( section.DataArray[ 0 ].text, 0 );
-                  offset.set( section.DataArray[ 1 ].text, 0 );
-
-                  const size = numberOfPolys + connectivity.length;
-                  indices = new Uint32Array( 3 * size - 9 * numberOfPolys );
-                  let indicesIndex = 0, connectivityIndex = 0;
-                  let i = 0, len0 = 0;
-                  const len = numberOfPolys;
-
-                  while ( i < len ) {
-
-                    const poly = [];
-                    let s = 0;
-                    const len1 = offset[ i ];
-
-                    while ( s < len1 - len0 ) {
-
-                      poly.push( connectivity[ connectivityIndex ++ ] );
-                      s ++;
-
-                    }
-
-                    let j = 1;
-
-                    while ( j < len1 - len0 - 1 ) {
-
-                      indices[ indicesIndex ++ ] = poly[ 0 ];
-                      indices[ indicesIndex ++ ] = poly[ j ];
-                      indices[ indicesIndex ++ ] = poly[ j + 1 ];
-                      j ++;
-
-                    }
-
-                    i ++;
-                    len0 = offset[ i - 1 ];
-
-                  }
-
-                }
-
-              }
-
-              break;
-
-            default:
-              break;
-
-          }
-
-        }
-
-        sectionIndex ++;
-
-      }
-
-      const geometry = new BufferGeometry();
-      geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
-      geometry.setAttribute( 'position', new THREE.BufferAttribute( points, 3 ) );
-
-      if ( normals.length === points.length ) {
-
-        geometry.setAttribute( 'normal', new THREE.BufferAttribute( normals, 3 ) );
-
-      }
-
-      return geometry;
-
-    } else {
-
-      throw new Error( 'Unsupported DATASET type' );
-
+      cls[0] = 1;
     }
 
+    return cls;
   }
-  */
 
 }
