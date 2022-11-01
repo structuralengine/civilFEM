@@ -102,7 +102,7 @@ export class SideRightPreComponent implements OnInit {
         this.parse_result_page(event);
         },
         (error) => {
-          alert(error.message);
+          alert('calc_modal_analysis ' + error.message);
           console.error(error);
           this.isLoading = false;
         }
@@ -111,28 +111,38 @@ export class SideRightPreComponent implements OnInit {
 
   /// 解析結果のページを読み取る
   private parse_result_page(event: string): void{
+
     const domParser = new DOMParser();
     const htmlElement = domParser.parseFromString(event, 'text/html');
     const frm: NodeListOf<HTMLElement> = htmlElement.getElementsByName("filename");
-    for(let i=0; i<frm.length; i++){
-      const t: any = frm[i];
-      const result_file: string = t.value;
-      let url = 'https://plantfem.org:5555/downloadfile/?filename=';
-      url += result_file;
-      this.get_vtk(url, i, (i === frm.length-1));
-    }
-    // // 読み取り処理が終わったら閉じる
-    // this.data.isCalcrated = true;
-    // this.dialogRef.close(3);
+
+    setTimeout(()=>
+      this.x_get_vtk(frm, 0)
+    , this.delay_time);
   }
 
-  /// 解析結果ファイルを取得する
-  private async get_vtk(url: string, index: number, close: boolean) {
+  /// サーバーが早すぎるとエラーになるため 2秒遅らせる
+  private delay_time = 3000;
 
-    await this.http.get(url,{ responseType: 'text' })
+  /// 解析結果ファイルを取得する
+  private x_get_vtk(frm: NodeListOf<HTMLElement>, index: number) {
+
+    const t: any = frm[index];
+    const result_file: string = t.value;
+    let url = 'https://plantfem.org:5555/downloadfile/?filename=';
+    url += result_file;
+
+    console.log('result', index, result_file);
+
+    this.http.get(url,{ responseType: 'text' })
       .subscribe(event => {
         this.data.set_result_vtk(event, index);
-        if(close){
+        if(index < frm.length - 1){
+          setTimeout(()=>
+            this.x_get_vtk(frm, index + 1)
+          , this.delay_time);
+
+        } else {
           // 読み取り処理が終わったら閉じる
           this.data.isCalcrated = true;
           this.isLoading = false;
@@ -140,10 +150,11 @@ export class SideRightPreComponent implements OnInit {
         }
       },
       (error) => {
-        alert(error.message);
-        console.error(error);
+        alert('get_vtk ' + error.message);
+        console.error('get_vtk', index, result_file, error.message);
         this.isLoading = false;
       });
-    return;
   }
+
+
 }
