@@ -15,5 +15,8 @@
 
 <div mat-dialog-actions>
     <button mat-raised-button color="primary" [mat-dialog-close]="1">戻る</button>
-    <button mat-raised-button color="primary" (click)="create_access_token()">解析結果</button>
+    <button *ngIf="!isLoading" mat-raised-button color="primary" (click)="create_access_token()">解析結果</button>
+    <div *ngIf="isLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+    </div>
 </div>

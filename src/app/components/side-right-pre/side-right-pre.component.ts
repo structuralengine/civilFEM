@@ -13,6 +13,7 @@ import pq from "pqgrid";
 export class SideRightPreComponent implements OnInit {
 
   @ViewChild("grid") grid!: SheetComponent;
+  public isLoading = false;
 
   constructor(
     private http: HttpClient,
@@ -58,6 +59,8 @@ export class SideRightPreComponent implements OnInit {
       return; // 既に解析していたら、同じ解析は解析しない
     }
 
+    this.isLoading = true;
+
     const inputVTK = this.data.get_vtk();
 
     const f = new window.File([inputVTK], "generate_bridge.vtk", { type: "text/plain" })
@@ -85,6 +88,7 @@ export class SideRightPreComponent implements OnInit {
       (error) => {
         alert("error create_access_token()");
         console.error(error);
+        this.isLoading = false;
       }
     );
 
@@ -98,45 +102,59 @@ export class SideRightPreComponent implements OnInit {
         this.parse_result_page(event);
         },
         (error) => {
-          alert(error.message);
+          alert('calc_modal_analysis ' + error.message);
           console.error(error);
+          this.isLoading = false;
         }
       );
   }
 
   /// 解析結果のページを読み取る
   private parse_result_page(event: string): void{
+
     const domParser = new DOMParser();
     const htmlElement = domParser.parseFromString(event, 'text/html');
     const frm: NodeListOf<HTMLElement> = htmlElement.getElementsByName("filename");
-    for(let i=0; i<frm.length; i++){
-      const t: any = frm[i];
-      const result_file: string = t.value;
-      let url = 'https://plantfem.org:5555/downloadfile/?filename=';
-      url += result_file;
-      this.get_vtk(url, i, (i === frm.length-1));
-    }
-    // // 読み取り処理が終わったら閉じる
-    // this.data.isCalcrated = true;
-    // this.dialogRef.close(3);
+
+    setTimeout(()=>
+      this.x_get_vtk(frm, 0)
+    , this.delay_time);
   }
 
+  /// サーバーが早すぎるとエラーになるため 2秒遅らせる
+  private delay_time = 3000;
+
   /// 解析結果ファイルを取得する
-  private get_vtk(url: string, index: number, close: boolean): void {
+  private x_get_vtk(frm: NodeListOf<HTMLElement>, index: number) {
+
+    const t: any = frm[index];
+    const result_file: string = t.value;
+    let url = 'https://plantfem.org:5555/downloadfile/?filename=';
+    url += result_file;
+
+    console.log('result', index, result_file);
 
     this.http.get(url,{ responseType: 'text' })
       .subscribe(event => {
         this.data.set_result_vtk(event, index);
-        if(close){
+        if(index < frm.length - 1){
+          setTimeout(()=>
+            this.x_get_vtk(frm, index + 1)
+          , this.delay_time);
+
+        } else {
           // 読み取り処理が終わったら閉じる
           this.data.isCalcrated = true;
+          this.isLoading = false;
           this.dialogRef.close(3);
         }
       },
       (error) => {
-        alert(error.message);
-        console.error(error);
+        alert('get_vtk ' + error.message);
+        console.error('get_vtk', index, result_file, error.message);
+        this.isLoading = false;
       });
-
   }
+
+
 }

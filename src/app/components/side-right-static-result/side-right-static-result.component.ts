@@ -27,15 +27,10 @@ export class SideRightStaticResultComponent implements OnInit {
 
   ngOnInit(): void {
     this.favoriteSeason = this.seasons[0];
-    this.radioChange();
+    this.radioChange(0);
   }
 
-  public radioChange() {
-    let i = 0;
-    for(i=0;i<this.seasons.length; i++){
-      if(this.seasons[i]===this.favoriteSeason)
-        break;
-    }
+  public radioChange(i: number) {
     const str_vtk = this.data.get_result_vtk(i);
     this.vtk.loadVYK(str_vtk);
   }
